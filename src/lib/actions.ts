@@ -3,7 +3,7 @@
 
 import { generatePromptIdeas as generatePromptIdeasFlow } from '@/ai/flows/generate-prompt-ideas';
 import { describePhotoForFlux1Dev as describePhotoForFlux1DevFlow } from '@/ai/flows/describe-photo-for-flux1-dev';
-import { chat as chatFlow, ChatInputSchema as ServerChatInputSchema } from '@/ai/flows/chat-flow';
+import { chat as chatFlow } from '@/ai/flows/chat-flow';
 import { z } from 'zod';
 
 const generateIdeasSchema = z.object({
@@ -71,8 +71,21 @@ export async function describePhotoAction(prevState: any, formData: FormData) {
     }
 }
 
+// Schema for chat history validation, previously imported.
+const messageSchema = z.object({
+  role: z.enum(['user', 'model']),
+  content: z.array(z.object({ text: z.string() })),
+});
+const chatHistorySchema = z.array(messageSchema);
+
 const chatActionSchema = z.object({
-  history: z.string().transform(str => JSON.parse(str)),
+  history: z.string().transform(str => {
+      try {
+        return JSON.parse(str);
+      } catch (e) {
+        return str; // let zod handle the error
+      }
+    }),
   prompt: z.string().min(1, 'Please enter a message.'),
 });
 
@@ -90,12 +103,12 @@ export async function chatAction(prevState: any, formData: FormData) {
         };
     }
     
-    const serverValidatedHistory = ServerChatInputSchema.shape.history.safeParse(validatedFields.data.history);
+    const serverValidatedHistory = chatHistorySchema.safeParse(validatedFields.data.history);
 
     if(!serverValidatedHistory.success) {
       return {
         message: 'Invalid history format.',
-        errors: null,
+        errors: serverValidatedHistory.error.flatten().fieldErrors,
         data: null,
       };
     }

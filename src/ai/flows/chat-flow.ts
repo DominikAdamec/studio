@@ -17,14 +17,14 @@ const MessageSchema = z.object({
 });
 
 // Defines the input for the chat flow.
-export const ChatInputSchema = z.object({
+const ChatInputSchema = z.object({
   history: z.array(MessageSchema).describe("The conversation history."),
   prompt: z.string().describe("The user's latest message."),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
 // Defines the output of the chat flow.
-export const ChatOutputSchema = z.string().describe("The AI's response.");
+const ChatOutputSchema = z.string().describe("The AI's response.");
 export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
 // The main exported function that clients will call.
