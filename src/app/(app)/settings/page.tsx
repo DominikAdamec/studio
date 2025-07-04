@@ -4,12 +4,42 @@ import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useProStatus } from '@/hooks/use-pro-status';
-import { Sparkles, User, Info } from 'lucide-react';
+import { useUser } from '@/hooks/use-user';
+import { signOutAction } from '@/lib/actions';
+import { Sparkles, User, Info, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SettingsPage() {
-    const { isPro } = useProStatus();
+    const { user, isPro, loading } = useUser();
+
+     if (loading) {
+        return (
+            <div className="h-full flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        );
+    }
+    
+    if (!user) {
+        return (
+             <div className="h-full flex flex-col items-center justify-center p-4">
+                <Card className="max-w-md w-full">
+                    <CardContent className="p-8 text-center">
+                        <User className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                        <h3 className="text-xl font-semibold">Please log in</h3>
+                        <p className="text-muted-foreground mt-2">
+                           You need to be logged in to access the settings page.
+                        </p>
+                        <Button asChild className="mt-6">
+                            <Link href="/login">
+                                Login
+                            </Link>
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+        )
+    }
 
     return (
         <div className="h-full flex flex-col">
@@ -39,6 +69,14 @@ export default function SettingsPage() {
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
+                                     <div className="flex justify-between items-center p-4 border rounded-lg">
+                                        <div>
+                                            <h4 className="font-semibold">Email</h4>
+                                            <p className="text-sm text-muted-foreground">
+                                               {user.email}
+                                            </p>
+                                        </div>
+                                    </div>
                                     <div className="flex justify-between items-center p-4 border rounded-lg">
                                         <div>
                                             <h4 className="font-semibold">Subscription Plan</h4>
@@ -55,9 +93,9 @@ export default function SettingsPage() {
                                             </Button>
                                         )}
                                     </div>
-                                    <p className="text-sm text-muted-foreground">
-                                        Full account management features are coming soon.
-                                    </p>
+                                     <form action={signOutAction}>
+                                        <Button variant="outline" className="w-full">Sign Out</Button>
+                                    </form>
                                 </CardContent>
                             </Card>
                         </TabsContent>

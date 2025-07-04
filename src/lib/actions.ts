@@ -5,6 +5,13 @@ import { generatePromptIdeas as generatePromptIdeasFlow } from '@/ai/flows/gener
 import { describePhotoForFlux1Dev as describePhotoForFlux1DevFlow } from '@/ai/flows/describe-photo-for-flux1-dev';
 import { chat as chatFlow } from '@/ai/flows/chat-flow';
 import { z } from 'zod';
+import { auth } from './firebase';
+import { redirect } from 'next/navigation';
+
+export async function signOutAction() {
+    await auth.signOut();
+    redirect('/login');
+}
 
 const generateIdeasSchema = z.object({
   topic: z.string().min(1, 'Please enter a topic.'),

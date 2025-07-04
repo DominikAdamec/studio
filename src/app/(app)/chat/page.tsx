@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/page-header';
-import { useProStatus } from '@/hooks/use-pro-status';
+import { useUser } from '@/hooks/use-user';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Bot, Sparkles, Lock, User, SendHorizonal, Loader2 } from 'lucide-react';
@@ -44,7 +44,7 @@ function ChatMessage({ message }: { message: Message }) {
 }
 
 export default function ChatPage() {
-  const { isPro, isLoaded } = useProStatus();
+  const { isPro, loading: userLoading } = useUser();
   const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([
       { role: 'model', content: "Hello! I'm Prompty, your AI assistant for crafting amazing image prompts. How can I help you today?" }
@@ -93,8 +93,12 @@ export default function ChatPage() {
     setPending(false);
   };
 
-  if (!isLoaded) {
-    return null;
+  if (userLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   if (!isPro) {

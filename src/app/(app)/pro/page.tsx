@@ -1,12 +1,12 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle, Sparkles } from 'lucide-react';
+import { CheckCircle, Sparkles, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useProStatus } from '@/hooks/use-pro-status';
-import { useToast } from '@/hooks/use-toast';
+import { useUser } from '@/hooks/use-user';
+import { useRouter } from 'next/navigation';
 
 const proFeatures = [
   'Generate prompts with specific artistic styles and moods',
@@ -18,16 +18,27 @@ const proFeatures = [
 ];
 
 export default function ProPage() {
-  const { isPro, setProStatus } = useProStatus();
-  const { toast } = useToast();
+  const { user, isPro, upgradeToPro, loading } = useUser();
+  const router = useRouter();
+  const [isUpgrading, setIsUpgrading] = React.useState(false);
 
-  const handleUpgrade = () => {
-    setProStatus(true);
-    toast({
-      title: 'Congratulations!',
-      description: "You've unlocked Prompty PRO! All features are now available.",
-    });
+  const handleUpgrade = async () => {
+    if (!user) {
+      router.push('/login?redirect=/pro');
+      return;
+    }
+    setIsUpgrading(true);
+    await upgradeToPro();
+    setIsUpgrading(false);
   };
+
+  if (loading) {
+    return (
+       <div className="h-full flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col">
@@ -63,9 +74,10 @@ export default function ProPage() {
                   size="lg"
                   className="w-full text-lg font-semibold"
                   onClick={handleUpgrade}
+                  disabled={isUpgrading}
                 >
-                  <Sparkles className="mr-2 h-5 w-5" />
-                  Unlock PRO Now
+                  {isUpgrading ? <Loader2 className="mr-2 h-5 w-5 animate-spin"/> : <Sparkles className="mr-2 h-5 w-5" />}
+                  {isUpgrading ? 'Upgrading...' : (user ? 'Unlock PRO Now' : 'Sign In to Upgrade')}
                 </Button>
               )}
             </CardContent>

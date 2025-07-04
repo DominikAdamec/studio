@@ -25,7 +25,7 @@ export default function LibraryPage() {
                  <p className="text-sm text-muted-foreground flex items-center"><Tag className="w-4 h-4 mr-2 text-accent"/> Tag and search your prompts easily <ProBadge /></p>
               </div>
                <p className="text-xs text-muted-foreground mt-6">
-                Upgrade to <Link href="/pro" className="underline text-primary">Prompty PRO</Link> to unlock these features.
+                <Link href="/signup" className="underline text-primary">Sign up</Link> or <Link href="/pro" className="underline text-primary">Upgrade to Prompty PRO</Link> to unlock these features.
               </p>
             </CardContent>
           </Card>

@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useProStatus } from '@/hooks/use-pro-status';
+import { useUser } from '@/hooks/use-user';
 import { ProBadge } from '@/components/pro-badge';
 import { PromptCard } from '@/components/prompt-card';
 import { generateIdeasAction } from '@/lib/actions';
@@ -35,9 +35,17 @@ function SubmitButton() {
 }
 
 export default function GeneratePage() {
-  const { isPro, isLoaded } = useProStatus();
+  const { isPro, loading: userLoading } = useUser();
   const initialState = { message: null, errors: null, data: null };
   const [state, dispatch] = useActionState(generateIdeasAction, initialState);
+
+  if (userLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -65,24 +73,24 @@ export default function GeneratePage() {
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label htmlFor="style" className="flex items-center">
-                        Artistic Style {!isPro && isLoaded && <ProBadge />}
+                        Artistic Style {!isPro && <ProBadge />}
                       </Label>
                       <Input
                         id="style"
                         name="style"
                         placeholder="e.g., Van Gogh, Cyberpunk, Anime"
-                        disabled={!isPro && isLoaded}
+                        disabled={!isPro}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="mood" className="flex items-center">
-                        Mood {!isPro && isLoaded && <ProBadge />}
+                        Mood {!isPro && <ProBadge />}
                       </Label>
                       <Input
                         id="mood"
                         name="mood"
                         placeholder="e.g., Serene, Melancholic, Energetic"
-                        disabled={!isPro && isLoaded}
+                        disabled={!isPro}
                       />
                     </div>
                   </div>

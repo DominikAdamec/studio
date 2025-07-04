@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useRef, useActionState } from 'react';
+import React, { useState, useRef, useActionState, useEffect } from 'react';
 import { useFormStatus } from 'react-dom';
-import { ImagePlus, Loader2, FileText, Wand2, Frown, Settings } from 'lucide-react';
+import { ImagePlus, Loader2, FileText, Wand2, Frown, Settings, Info } from 'lucide-react';
 import Image from 'next/image';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -14,13 +14,17 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { useProStatus } from '@/hooks/use-pro-status';
+import { useUser } from '@/hooks/use-user';
 import { ProBadge } from '@/components/pro-badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import Link from 'next/link';
 
-function SubmitButton() {
+const GUEST_LIMIT = 10;
+
+function SubmitButton({ disabled }: { disabled?: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending} className="w-full">
+    <Button type="submit" disabled={pending || disabled} className="w-full">
       {pending ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -40,10 +44,48 @@ export default function DescribePage() {
   const [photoDataUri, setPhotoDataUri] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { isPro, isLoaded } = useProStatus();
+  const { user, isPro, loading: userLoading } = useUser();
+  const [guestUsage, setGuestUsage] = useState({ count: 0, date: '' });
 
   const initialState = { message: null, errors: null, data: null };
   const [state, dispatch] = useActionState(describePhotoAction, initialState);
+
+  useEffect(() => {
+    if (!user && !userLoading) {
+      try {
+        const storedUsage = localStorage.getItem('guestDescribeUsage');
+        const today = new Date().toISOString().split('T')[0];
+        if (storedUsage) {
+          const usage = JSON.parse(storedUsage);
+          if (usage.date === today) {
+            setGuestUsage(usage);
+          } else {
+            // Reset for a new day
+            setGuestUsage({ count: 0, date: today });
+          }
+        } else {
+          setGuestUsage({ count: 0, date: today });
+        }
+      } catch (e) {
+        console.error("Failed to parse guest usage from localStorage", e);
+        setGuestUsage({ count: 0, date: new Date().toISOString().split('T')[0] });
+      }
+    }
+  }, [user, userLoading]);
+
+  useEffect(() => {
+    if (state.message === 'success' && !user) {
+      const today = new Date().toISOString().split('T')[0];
+      const newUsage = { count: guestUsage.count + 1, date: today };
+      setGuestUsage(newUsage);
+      try {
+        localStorage.setItem('guestDescribeUsage', JSON.stringify(newUsage));
+      } catch (e) {
+         console.error("Failed to save guest usage to localStorage", e);
+      }
+    }
+  }, [state, user, guestUsage.count]);
+
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -70,6 +112,17 @@ export default function DescribePage() {
     { id: 'normal', label: 'Normal' },
     { id: 'high', label: 'High' },
   ];
+  
+  const isGuestLimitReached = !user && guestUsage.count >= GUEST_LIMIT;
+
+
+  if (userLoading) {
+     return (
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col">
@@ -79,102 +132,115 @@ export default function DescribePage() {
       />
       <div className="flex-1 overflow-y-auto p-4 md:px-8">
         <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
-          <form action={dispatch} className="flex flex-col gap-4">
-             <Card>
-              <CardContent className="p-6 flex flex-col items-center justify-center h-full aspect-square">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="hidden"
-                  accept="image/png, image/jpeg, image/webp"
-                />
-                {photoDataUri ? (
-                  <div className="relative w-full h-full rounded-lg overflow-hidden">
-                    <Image src={photoDataUri} alt="Uploaded preview" layout="fill" objectFit="contain" />
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <ImagePlus className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <h3 className="mt-4 text-lg font-medium">Upload a Photo</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">Select a file from your device</p>
-                  </div>
-                )}
-                 {error && <p className="mt-4 text-sm text-center text-destructive">{error}</p>}
-              </CardContent>
-            </Card>
+          <div className="flex flex-col gap-4">
+            {isGuestLimitReached && (
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle>Daily Limit Reached</AlertTitle>
+                <AlertDescription>
+                  You've reached your daily limit of {GUEST_LIMIT} photo descriptions for guests. 
+                  <Link href="/signup" className="font-semibold text-primary underline ml-1">Sign up for free</Link> to continue.
+                </AlertDescription>
+              </Alert>
+            )}
+            <form action={dispatch} className="flex flex-col gap-4">
+              <Card>
+                <CardContent className="p-6 flex flex-col items-center justify-center h-full aspect-square">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept="image/png, image/jpeg, image/webp"
+                    disabled={isGuestLimitReached}
+                  />
+                  {photoDataUri ? (
+                    <div className="relative w-full h-full rounded-lg overflow-hidden">
+                      <Image src={photoDataUri} alt="Uploaded preview" layout="fill" objectFit="contain" />
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <ImagePlus className="mx-auto h-12 w-12 text-muted-foreground" />
+                      <h3 className="mt-4 text-lg font-medium">Upload a Photo</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">Select a file from your device</p>
+                    </div>
+                  )}
+                  {error && <p className="mt-4 text-sm text-center text-destructive">{error}</p>}
+                </CardContent>
+              </Card>
 
-            <input type="hidden" name="photoDataUri" value={photoDataUri || ''} />
-            <Button onClick={handleUploadClick} variant="outline" type="button" className="w-full">
-                {photoDataUri ? 'Change Photo' : 'Select Photo'}
-            </Button>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center text-lg">
-                  <Settings className="w-5 h-5 mr-2" />
-                  Output Configuration
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label>Prompt Length</Label>
-                   {state.errors?.promptLength && <p className="text-sm text-destructive">{state.errors.promptLength[0]}</p>}
-                  <RadioGroup name="promptLength" defaultValue="normal" className="flex gap-4">
-                    {options.map(option => (
-                        <div key={option.id} className="flex items-center space-x-2">
-                            <RadioGroupItem value={option.id} id={`length-${option.id}`} />
-                            <Label htmlFor={`length-${option.id}`}>{option.label}</Label>
-                        </div>
-                    ))}
-                  </RadioGroup>
-                </div>
-                <Separator />
-                <div className="space-y-2">
-                  <Label>Prompt Detail</Label>
-                   {state.errors?.promptDetail && <p className="text-sm text-destructive">{state.errors.promptDetail[0]}</p>}
-                  <RadioGroup name="promptDetail" defaultValue="normal" className="flex gap-4">
-                    {options.map(option => (
-                        <div key={option.id} className="flex items-center space-x-2">
-                            <RadioGroupItem value={option.id} id={`detail-${option.id}`} />
-                            <Label htmlFor={`detail-${option.id}`}>{option.label}</Label>
-                        </div>
-                    ))}
-                  </RadioGroup>
-                </div>
-                <Separator />
-                <div className="space-y-2">
-                  <Label htmlFor="language">Output Language</Label>
-                  <Select name="language" defaultValue="English">
-                    <SelectTrigger id="language">
-                      <SelectValue placeholder="Select language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="English">English</SelectItem>
-                      <SelectItem value="Česky">Česky</SelectItem>
-                      <SelectItem value="Polski">Polski</SelectItem>
-                      <SelectItem value="Español">Español</SelectItem>
-                      <SelectItem value="Français">Français</SelectItem>
-                      <SelectItem value="Deutsch">Deutsch</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {state.errors?.language && <p className="text-sm text-destructive">{state.errors.language[0]}</p>}
-                </div>
-                <Separator />
-                 <div className="flex items-center justify-between space-x-2">
-                  <Label htmlFor="nsfw-switch" className="flex flex-col space-y-1">
-                    <span className="flex items-center">Allow Potentially Unsafe Content {isLoaded && !isPro && <ProBadge />}</span>
-                    <span className="font-normal leading-snug text-muted-foreground text-xs">
-                      Disable safety filters. Use with caution.
-                    </span>
-                  </Label>
-                  <Switch id="nsfw-switch" name="allowNsfw" disabled={isLoaded && !isPro} />
-                </div>
-              </CardContent>
-            </Card>
+              <input type="hidden" name="photoDataUri" value={photoDataUri || ''} />
+              <Button onClick={handleUploadClick} variant="outline" type="button" className="w-full" disabled={isGuestLimitReached}>
+                  {photoDataUri ? 'Change Photo' : 'Select Photo'}
+              </Button>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-lg">
+                    <Settings className="w-5 h-5 mr-2" />
+                    Output Configuration
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-2">
+                    <Label>Prompt Length</Label>
+                    {state.errors?.promptLength && <p className="text-sm text-destructive">{state.errors.promptLength[0]}</p>}
+                    <RadioGroup name="promptLength" defaultValue="normal" className="flex gap-4">
+                      {options.map(option => (
+                          <div key={option.id} className="flex items-center space-x-2">
+                              <RadioGroupItem value={option.id} id={`length-${option.id}`} disabled={isGuestLimitReached}/>
+                              <Label htmlFor={`length-${option.id}`}>{option.label}</Label>
+                          </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                  <Separator />
+                  <div className="space-y-2">
+                    <Label>Prompt Detail</Label>
+                    {state.errors?.promptDetail && <p className="text-sm text-destructive">{state.errors.promptDetail[0]}</p>}
+                    <RadioGroup name="promptDetail" defaultValue="normal" className="flex gap-4">
+                      {options.map(option => (
+                          <div key={option.id} className="flex items-center space-x-2">
+                              <RadioGroupItem value={option.id} id={`detail-${option.id}`} disabled={isGuestLimitReached}/>
+                              <Label htmlFor={`detail-${option.id}`}>{option.label}</Label>
+                          </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+                  <Separator />
+                  <div className="space-y-2">
+                    <Label htmlFor="language">Output Language</Label>
+                    <Select name="language" defaultValue="English" disabled={isGuestLimitReached}>
+                      <SelectTrigger id="language">
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="English">English</SelectItem>
+                        <SelectItem value="Česky">Česky</SelectItem>
+                        <SelectItem value="Polski">Polski</SelectItem>
+                        <SelectItem value="Español">Español</SelectItem>
+                        <SelectItem value="Français">Français</SelectItem>
+                        <SelectItem value="Deutsch">Deutsch</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {state.errors?.language && <p className="text-sm text-destructive">{state.errors.language[0]}</p>}
+                  </div>
+                  <Separator />
+                  <div className="flex items-center justify-between space-x-2">
+                    <Label htmlFor="nsfw-switch" className="flex flex-col space-y-1">
+                      <span className="flex items-center">Allow Potentially Unsafe Content {!isPro && <ProBadge />}</span>
+                      <span className="font-normal leading-snug text-muted-foreground text-xs">
+                        Disable safety filters. Use with caution.
+                      </span>
+                    </Label>
+                    <Switch id="nsfw-switch" name="allowNsfw" disabled={!isPro || isGuestLimitReached} />
+                  </div>
+                </CardContent>
+              </Card>
 
-            {photoDataUri && <SubmitButton />}
-          </form>
+              {photoDataUri && <SubmitButton disabled={isGuestLimitReached} />}
+            </form>
+          </div>
           
           <div className="flex flex-col gap-6">
             {state.data ? (
