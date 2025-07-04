@@ -19,6 +19,8 @@ const DescribePhotoForFlux1DevInputSchema = z.object({
     ),
   promptLength: z.enum(['low', 'normal', 'high']).default('normal').describe('The desired length of the generated prompt.'),
   promptDetail: z.enum(['low', 'normal', 'high']).default('normal').describe('The desired level of detail in the generated prompt.'),
+  language: z.string().default('English').describe('The output language for the description and prompt.'),
+  allowNsfw: z.boolean().default(false).describe('Whether to allow potentially unsafe content.'),
 });
 export type DescribePhotoForFlux1DevInput = z.infer<typeof DescribePhotoForFlux1DevInputSchema>;
 
@@ -40,12 +42,15 @@ const describePhotoForFlux1DevPrompt = ai.definePrompt({
 
   Analyze the following image and provide a concise description of its contents. Then, generate a prompt that could be used with Flux1.Dev to recreate a similar image.
   
-  The user has specified the desired prompt length and detail level. Adhere to these settings:
+  The user has specified the desired prompt length, detail level, and language. Adhere to these settings:
   - Prompt Length: {{promptLength}}
   - Prompt Detail: {{promptDetail}}
+  - Output Language: {{language}}
   
   A 'low' length should be a very short phrase. 'Normal' should be one or two sentences. 'High' can be a full paragraph.
   A 'low' detail should only include the main subjects. 'Normal' should include key objects and the setting. 'High' detail should include intricate details, lighting, and artistic style.
+
+  Ensure both the description and the prompt are in {{language}}.
 
   Image: {{media url=photoDataUri}}
 
@@ -60,7 +65,21 @@ const describePhotoForFlux1DevFlow = ai.defineFlow(
     outputSchema: DescribePhotoForFlux1DevOutputSchema,
   },
   async input => {
-    const {output} = await describePhotoForFlux1DevPrompt(input);
+    const safetySettings = input.allowNsfw ? [{
+        category: 'HARM_CATEGORY_HATE_SPEECH',
+        threshold: 'BLOCK_NONE',
+      }, {
+        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+        threshold: 'BLOCK_NONE',
+      }, {
+        category: 'HARM_CATEGORY_HARASSMENT',
+        threshold: 'BLOCK_NONE',
+      }, {
+        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+        threshold: 'BLOCK_NONE',
+      }] : [];
+
+    const {output} = await describePhotoForFlux1DevPrompt(input, { safetySettings });
     return output!;
   }
 );

@@ -12,6 +12,10 @@ import { describePhotoAction } from '@/lib/actions';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { useProStatus } from '@/hooks/use-pro-status';
+import { ProBadge } from '@/components/pro-badge';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -36,6 +40,7 @@ export default function DescribePage() {
   const [photoDataUri, setPhotoDataUri] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isPro, isLoaded } = useProStatus();
 
   const initialState = { message: null, errors: null, data: null };
   const [state, dispatch] = useActionState(describePhotoAction, initialState);
@@ -136,6 +141,34 @@ export default function DescribePage() {
                         </div>
                     ))}
                   </RadioGroup>
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <Label htmlFor="language">Output Language</Label>
+                  <Select name="language" defaultValue="English">
+                    <SelectTrigger id="language">
+                      <SelectValue placeholder="Select language" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="English">English</SelectItem>
+                      <SelectItem value="Česky">Česky</SelectItem>
+                      <SelectItem value="Polski">Polski</SelectItem>
+                      <SelectItem value="Español">Español</SelectItem>
+                      <SelectItem value="Français">Français</SelectItem>
+                      <SelectItem value="Deutsch">Deutsch</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {state.errors?.language && <p className="text-sm text-destructive">{state.errors.language[0]}</p>}
+                </div>
+                <Separator />
+                 <div className="flex items-center justify-between space-x-2">
+                  <Label htmlFor="nsfw-switch" className="flex flex-col space-y-1">
+                    <span className="flex items-center">Allow Potentially Unsafe Content {isLoaded && !isPro && <ProBadge />}</span>
+                    <span className="font-normal leading-snug text-muted-foreground text-xs">
+                      Disable safety filters. Use with caution.
+                    </span>
+                  </Label>
+                  <Switch id="nsfw-switch" name="allowNsfw" disabled={isLoaded && !isPro} />
                 </div>
               </CardContent>
             </Card>

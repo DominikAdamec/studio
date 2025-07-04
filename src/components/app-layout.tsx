@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
-import { Gem, Image, Library, Bot, Wand2 } from 'lucide-react';
+import { Gem, Image, Library, Bot, Wand2, Settings } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { NavLink } from '@/components/nav-link';
@@ -15,6 +15,7 @@ const navItems = [
   { href: '/describe', label: 'Describe', icon: Image },
   { href: '/library', label: 'Library', icon: Library },
   { href: '/chat', label: 'Chat', icon: Bot, pro: true },
+  { href: '/settings', label: 'Settings', icon: Settings },
   { href: '/pro', label: 'Go Pro', icon: Gem },
 ];
 

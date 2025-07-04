@@ -40,6 +40,8 @@ const describePhotoSchema = z.object({
     photoDataUri: z.string().min(1, 'Please upload a photo.'),
     promptLength: z.enum(['low', 'normal', 'high']),
     promptDetail: z.enum(['low', 'normal', 'high']),
+    language: z.string(),
+    allowNsfw: z.preprocess((val) => val === 'on', z.boolean()),
 });
 
 export async function describePhotoAction(prevState: any, formData: FormData) {
@@ -47,11 +49,13 @@ export async function describePhotoAction(prevState: any, formData: FormData) {
         photoDataUri: formData.get('photoDataUri'),
         promptLength: formData.get('promptLength'),
         promptDetail: formData.get('promptDetail'),
+        language: formData.get('language'),
+        allowNsfw: formData.get('allowNsfw'),
     });
 
     if (!validatedFields.success) {
         return {
-            message: 'Invalid data. Please select options for prompt length and detail.',
+            message: 'Invalid data. Please check your selections.',
             errors: validatedFields.error.flatten().fieldErrors,
             data: null,
         };
