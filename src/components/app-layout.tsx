@@ -8,11 +8,11 @@ import { cn } from '@/lib/utils';
 import { NavLink } from '@/components/nav-link';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useUser } from '@/hooks/use-user';
-import { ProBadge } from '@/components/pro-badge';
+import { ProBadge } from './pro-badge';
 import { UserNav } from './user-nav';
 import { Button } from './ui/button';
 import Link from 'next/link';
-import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import { Separator } from './ui/separator';
 
 const navItems = [
@@ -109,7 +109,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </header>
         <main className="flex-1 pb-24">{children}</main>
         <footer className="fixed bottom-0 inset-x-0 p-4 flex justify-center z-50 md:hidden">
-            <nav className="bg-card text-card-foreground rounded-full shadow-lg px-3 py-2 flex items-center gap-3">
+            <nav className="bg-card text-card-foreground rounded-full shadow-lg px-4 py-2 flex items-center gap-4">
                 {mobileNavItems.slice(0, 2).map(({ href, label, icon: Icon, pro }) => (
                     <NavLink key={href} href={href} active={pathname.startsWith(href)} className={cn("rounded-full p-3 transition-colors", pathname.startsWith(href) ? "text-primary" : "text-muted-foreground")}>
                          <Icon className="w-6 h-6" />
@@ -133,6 +133,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="bottom" className="rounded-t-2xl">
+                        <SheetHeader>
+                          <SheetTitle className="sr-only">Mobile Menu</SheetTitle>
+                        </SheetHeader>
                         <div className="p-4">
                            <nav className="flex flex-col space-y-2">
                                 <NavLink href={settingsItem.href} active={pathname.startsWith(settingsItem.href)}>
