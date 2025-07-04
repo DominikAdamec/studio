@@ -17,6 +17,8 @@ const DescribePhotoForFlux1DevInputSchema = z.object({
     .describe(
       "A photo to be described, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
+  promptLength: z.enum(['low', 'normal', 'high']).default('normal').describe('The desired length of the generated prompt.'),
+  promptDetail: z.enum(['low', 'normal', 'high']).default('normal').describe('The desired level of detail in the generated prompt.'),
 });
 export type DescribePhotoForFlux1DevInput = z.infer<typeof DescribePhotoForFlux1DevInputSchema>;
 
@@ -36,7 +38,14 @@ const describePhotoForFlux1DevPrompt = ai.definePrompt({
   output: {schema: DescribePhotoForFlux1DevOutputSchema},
   prompt: `You are an AI assistant that analyzes images and generates prompts for AI image generators, specifically Flux1.Dev.
 
-  Analyze the following image and provide a concise description of its contents.  Then, generate a prompt that could be used with Flux1.Dev to recreate a similar image.
+  Analyze the following image and provide a concise description of its contents. Then, generate a prompt that could be used with Flux1.Dev to recreate a similar image.
+  
+  The user has specified the desired prompt length and detail level. Adhere to these settings:
+  - Prompt Length: {{promptLength}}
+  - Prompt Detail: {{promptDetail}}
+  
+  A 'low' length should be a very short phrase. 'Normal' should be one or two sentences. 'High' can be a full paragraph.
+  A 'low' detail should only include the main subjects. 'Normal' should include key objects and the setting. 'High' detail should include intricate details, lighting, and artistic style.
 
   Image: {{media url=photoDataUri}}
 

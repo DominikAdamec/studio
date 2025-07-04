@@ -38,16 +38,20 @@ export async function generateIdeasAction(prevState: any, formData: FormData) {
 
 const describePhotoSchema = z.object({
     photoDataUri: z.string().min(1, 'Please upload a photo.'),
+    promptLength: z.enum(['low', 'normal', 'high']),
+    promptDetail: z.enum(['low', 'normal', 'high']),
 });
 
 export async function describePhotoAction(prevState: any, formData: FormData) {
     const validatedFields = describePhotoSchema.safeParse({
         photoDataUri: formData.get('photoDataUri'),
+        promptLength: formData.get('promptLength'),
+        promptDetail: formData.get('promptDetail'),
     });
 
     if (!validatedFields.success) {
         return {
-            message: 'Invalid data.',
+            message: 'Invalid data. Please select options for prompt length and detail.',
             errors: validatedFields.error.flatten().fieldErrors,
             data: null,
         };
