@@ -1,1 +1,5 @@
-// Flows will be imported for their side effects in this file.
+import { config } from 'dotenv';
+config();
+
+import '@/ai/flows/describe-photo-for-flux1-dev.ts';
+import '@/ai/flows/generate-prompt-ideas.ts';
