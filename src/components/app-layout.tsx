@@ -109,7 +109,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         </header>
         <main className="flex-1 pb-24">{children}</main>
         <footer className="fixed bottom-0 inset-x-0 p-4 flex justify-center z-50 md:hidden">
-            <nav className="bg-card text-card-foreground rounded-full shadow-lg p-2 flex items-center gap-2">
+            <nav className="bg-card text-card-foreground rounded-full shadow-lg px-3 py-2 flex items-center gap-3">
                 {mobileNavItems.slice(0, 2).map(({ href, label, icon: Icon, pro }) => (
                     <NavLink key={href} href={href} active={pathname.startsWith(href)} className={cn("rounded-full p-3 transition-colors", pathname.startsWith(href) ? "text-primary" : "text-muted-foreground")}>
                          <Icon className="w-6 h-6" />
