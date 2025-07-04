@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import React, { useState, useRef, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { ImagePlus, Loader2, FileText, Wand2, Frown } from 'lucide-react';
 import Image from 'next/image';
 import { PageHeader } from '@/components/page-header';
@@ -35,7 +35,7 @@ export default function DescribePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const initialState = { message: null, errors: null, data: null };
-  const [state, dispatch] = useFormState(describePhotoAction, initialState);
+  const [state, dispatch] = useActionState(describePhotoAction, initialState);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

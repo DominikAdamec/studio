@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import React, { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Wand2, Loader2, Sparkles, Frown } from 'lucide-react';
 
 import { PageHeader } from '@/components/page-header';
@@ -37,7 +37,7 @@ function SubmitButton() {
 export default function GeneratePage() {
   const { isPro, isLoaded } = useProStatus();
   const initialState = { message: null, errors: null, data: null };
-  const [state, dispatch] = useFormState(generateIdeasAction, initialState);
+  const [state, dispatch] = useActionState(generateIdeasAction, initialState);
 
   return (
     <div className="flex flex-col h-full">
