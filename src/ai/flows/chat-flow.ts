@@ -1,0 +1,70 @@
+'use server';
+/**
+ * @fileOverview A conversational AI chat flow for Prompty.
+ *
+ * - chat - The main function to interact with the chat AI.
+ * - ChatInput - The input type for the chat function.
+ * - ChatOutput - The return type for the chat function.
+ */
+
+import {ai} from '@/ai/genkit';
+import {z} from 'genkit';
+
+// Defines the structure for a single message in the conversation history.
+const MessageSchema = z.object({
+  role: z.enum(['user', 'model']),
+  content: z.array(z.object({ text: z.string() })),
+});
+
+// Defines the input for the chat flow.
+export const ChatInputSchema = z.object({
+  history: z.array(MessageSchema).describe("The conversation history."),
+  prompt: z.string().describe("The user's latest message."),
+});
+export type ChatInput = z.infer<typeof ChatInputSchema>;
+
+// Defines the output of the chat flow.
+export const ChatOutputSchema = z.string().describe("The AI's response.");
+export type ChatOutput = z.infer<typeof ChatOutputSchema>;
+
+// The main exported function that clients will call.
+export async function chat(input: ChatInput): Promise<ChatOutput> {
+  return chatFlow(input);
+}
+
+// Defines the Genkit flow for the chat functionality.
+const chatFlow = ai.defineFlow(
+  {
+    name: 'chatFlow',
+    inputSchema: ChatInputSchema,
+    outputSchema: ChatOutputSchema,
+  },
+  async ({ history, prompt }) => {
+    
+    // The core generation call to the AI model.
+    const { text } = await ai.generate({
+        prompt: [
+            // System prompt to set the AI's persona and instructions.
+            {
+                role: 'system',
+                content: [{ text: `You are Prompty, an expert AI assistant specializing in crafting and refining prompts for image generation models like Flux1.Dev, Midjourney, and DALL-E. Your goal is to help users create the perfect prompt.
+
+- Be conversational and friendly.
+- When a user gives you a topic, help them brainstorm and expand on it.
+- If a user gives you a prompt, offer specific suggestions for improvement (e.g., adding details about style, lighting, composition, camera angles).
+- You can ask clarifying questions to better understand the user's vision.
+- For now, you cannot see images in chat.
+- Keep your responses concise and easy to understand.` }],
+            },
+            // Spread the existing conversation history.
+            ...history,
+            // Add the user's new message.
+            {
+                role: 'user',
+                content: [{ text: prompt }],
+            },
+        ],
+    });
+    return text;
+  }
+);

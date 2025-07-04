@@ -3,6 +3,7 @@
 
 import { generatePromptIdeas as generatePromptIdeasFlow } from '@/ai/flows/generate-prompt-ideas';
 import { describePhotoForFlux1Dev as describePhotoForFlux1DevFlow } from '@/ai/flows/describe-photo-for-flux1-dev';
+import { chat as chatFlow, ChatInputSchema as ServerChatInputSchema } from '@/ai/flows/chat-flow';
 import { z } from 'zod';
 
 const generateIdeasSchema = z.object({
@@ -67,5 +68,47 @@ export async function describePhotoAction(prevState: any, formData: FormData) {
     } catch (error) {
         console.error(error);
         return { message: 'AI error: Could not describe photo.', errors: null, data: null };
+    }
+}
+
+const chatActionSchema = z.object({
+  history: z.string().transform(str => JSON.parse(str)),
+  prompt: z.string().min(1, 'Please enter a message.'),
+});
+
+export async function chatAction(prevState: any, formData: FormData) {
+    const validatedFields = chatActionSchema.safeParse({
+        history: formData.get('history'),
+        prompt: formData.get('prompt'),
+    });
+
+    if (!validatedFields.success) {
+        return {
+            message: 'Invalid form data.',
+            errors: validatedFields.error.flatten().fieldErrors,
+            data: null,
+        };
+    }
+    
+    const serverValidatedHistory = ServerChatInputSchema.shape.history.safeParse(validatedFields.data.history);
+
+    if(!serverValidatedHistory.success) {
+      return {
+        message: 'Invalid history format.',
+        errors: null,
+        data: null,
+      };
+    }
+
+    try {
+        const result = await chatFlow({ 
+          history: serverValidatedHistory.data, 
+          prompt: validatedFields.data.prompt 
+        });
+        return { message: 'success', errors: null, data: result };
+    } catch (error) {
+        console.error(error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        return { message: `AI error: Could not get a response. ${errorMessage}`, errors: null, data: null };
     }
 }
