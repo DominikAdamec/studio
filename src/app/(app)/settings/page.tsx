@@ -12,33 +12,12 @@ import Link from 'next/link';
 export default function SettingsPage() {
     const { user, isPro, loading } = useUser();
 
-     if (loading) {
+    if (loading) {
         return (
             <div className="h-full flex items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin" />
             </div>
         );
-    }
-    
-    if (!user) {
-        return (
-             <div className="h-full flex flex-col items-center justify-center p-4">
-                <Card className="max-w-md w-full">
-                    <CardContent className="p-8 text-center">
-                        <User className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                        <h3 className="text-xl font-semibold">Please log in</h3>
-                        <p className="text-muted-foreground mt-2">
-                           You need to be logged in to access the settings page.
-                        </p>
-                        <Button asChild className="mt-6">
-                            <Link href="/login">
-                                Login
-                            </Link>
-                        </Button>
-                    </CardContent>
-                </Card>
-            </div>
-        )
     }
 
     return (
@@ -61,43 +40,62 @@ export default function SettingsPage() {
                             </TabsTrigger>
                         </TabsList>
                         <TabsContent value="account">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Account Information</CardTitle>
-                                    <CardDescription>
-                                        Manage your subscription and account details.
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                     <div className="flex justify-between items-center p-4 border rounded-lg">
-                                        <div>
-                                            <h4 className="font-semibold">Email</h4>
-                                            <p className="text-sm text-muted-foreground">
-                                               {user.email}
-                                            </p>
+                             {user ? (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Account Information</CardTitle>
+                                        <CardDescription>
+                                            Manage your subscription and account details.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <div className="flex justify-between items-center p-4 border rounded-lg">
+                                            <div>
+                                                <h4 className="font-semibold">Email</h4>
+                                                <p className="text-sm text-muted-foreground">
+                                                {user.email}
+                                                </p>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="flex justify-between items-center p-4 border rounded-lg">
-                                        <div>
-                                            <h4 className="font-semibold">Subscription Plan</h4>
-                                            <p className="text-sm text-muted-foreground">
-                                                You are currently on the {isPro ? 'PRO' : 'Free'} plan.
-                                            </p>
+                                        <div className="flex justify-between items-center p-4 border rounded-lg">
+                                            <div>
+                                                <h4 className="font-semibold">Subscription Plan</h4>
+                                                <p className="text-sm text-muted-foreground">
+                                                    You are currently on the {isPro ? 'PRO' : 'Free'} plan.
+                                                </p>
+                                            </div>
+                                            {!isPro && (
+                                                <Button asChild>
+                                                    <Link href="/pro">
+                                                        <Sparkles className="mr-2 h-4 w-4" />
+                                                        Upgrade to PRO
+                                                    </Link>
+                                                </Button>
+                                            )}
                                         </div>
-                                        {!isPro && (
-                                            <Button asChild>
-                                                <Link href="/pro">
-                                                    <Sparkles className="mr-2 h-4 w-4" />
-                                                    Upgrade to PRO
-                                                </Link>
-                                            </Button>
-                                        )}
-                                    </div>
-                                     <form action={signOutAction}>
-                                        <Button variant="outline" className="w-full">Sign Out</Button>
-                                    </form>
-                                </CardContent>
-                            </Card>
+                                        <form action={signOutAction}>
+                                            <Button variant="outline" className="w-full">Sign Out</Button>
+                                        </form>
+                                    </CardContent>
+                                </Card>
+                            ) : (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Account</CardTitle>
+                                        <CardDescription>
+                                            Log in or create an account to manage your settings and unlock features.
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="flex flex-col gap-4">
+                                        <Button asChild>
+                                            <Link href="/login">Login</Link>
+                                        </Button>
+                                        <Button asChild variant="outline">
+                                            <Link href="/signup">Sign Up</Link>
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            )}
                         </TabsContent>
                         <TabsContent value="about">
                             <Card>
