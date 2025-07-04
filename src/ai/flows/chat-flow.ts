@@ -10,16 +10,28 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
+// Defines a single part of a message, which can be text or media.
+const ContentPartSchema = z.union([
+  z.object({text: z.string()}),
+  z.object({media: z.object({url: z.string()})}),
+]);
+
 // Defines the structure for a single message in the conversation history.
 const MessageSchema = z.object({
   role: z.enum(['user', 'model']),
-  content: z.array(z.object({ text: z.string() })),
+  content: z.array(ContentPartSchema),
 });
 
 // Defines the input for the chat flow.
 const ChatInputSchema = z.object({
-  history: z.array(MessageSchema).describe("The conversation history."),
+  history: z.array(MessageSchema).describe('The conversation history.'),
   prompt: z.string().describe("The user's latest message."),
+  image: z
+    .string()
+    .optional()
+    .describe(
+      "An optional image uploaded by the user, as a data URI."
+    ),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
@@ -39,8 +51,17 @@ const chatFlow = ai.defineFlow(
     inputSchema: ChatInputSchema,
     outputSchema: ChatOutputSchema,
   },
-  async ({ history, prompt }) => {
+  async ({ history, prompt, image }) => {
     
+    // Construct the user's current message content, including the image if present.
+    const userMessageContent: z.infer<typeof ContentPartSchema>[] = [];
+    if (prompt) {
+        userMessageContent.push({ text: prompt });
+    }
+    if (image) {
+        userMessageContent.push({ media: { url: image } });
+    }
+
     // The core generation call to the AI model.
     const { text } = await ai.generate({
         prompt: [
@@ -53,7 +74,7 @@ const chatFlow = ai.defineFlow(
 - When a user gives you a topic, help them brainstorm and expand on it.
 - If a user gives you a prompt, offer specific suggestions for improvement (e.g., adding details about style, lighting, composition, camera angles).
 - You can ask clarifying questions to better understand the user's vision.
-- For now, you cannot see images in chat.
+- You can now see images provided by the user.
 - Keep your responses concise and easy to understand.` }],
             },
             // Spread the existing conversation history.
@@ -61,7 +82,7 @@ const chatFlow = ai.defineFlow(
             // Add the user's new message.
             {
                 role: 'user',
-                content: [{ text: prompt }],
+                content: userMessageContent,
             },
         ],
     });

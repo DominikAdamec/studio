@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { PageHeader } from '@/components/page-header';
 import { useUser } from '@/hooks/use-user';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Bot, Sparkles, Lock, User, SendHorizonal, Loader2 } from 'lucide-react';
+import { Bot, Sparkles, Lock, User, SendHorizonal, Loader2, Paperclip, X } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { chatAction } from '@/lib/actions';
 import { cn } from '@/lib/utils';
@@ -17,6 +18,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 type Message = {
   role: 'user' | 'model';
   content: string;
+  image?: string;
 };
 
 function ChatMessage({ message }: { message: Message }) {
@@ -32,7 +34,12 @@ function ChatMessage({ message }: { message: Message }) {
                 "p-4 rounded-lg max-w-[80%]",
                 isUser ? "bg-primary text-primary-foreground" : "bg-muted"
             )}>
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                {message.image && (
+                    <div className="relative aspect-square mb-2 rounded-md overflow-hidden">
+                        <Image src={message.image} alt="User upload" layout="fill" objectFit="cover" />
+                    </div>
+                )}
+                {message.content && <p className="text-sm whitespace-pre-wrap">{message.content}</p>}
             </div>
             {isUser && (
                 <Avatar className="h-8 w-8">
@@ -47,36 +54,72 @@ export default function ChatPage() {
   const { isPro, loading: userLoading } = useUser();
   const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([
-      { role: 'model', content: "Hello! I'm Prompty, your AI assistant for crafting amazing image prompts. How can I help you today?" }
+      { role: 'model', content: "Hello! I'm Prompty, your AI assistant for crafting amazing image prompts. How can I help you today? You can upload an image for inspiration." }
   ]);
   const [pending, setPending] = useState(false);
   const [prompt, setPrompt] = useState('');
+  const [image, setImage] = useState<string | null>(null);
+
   const viewportRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (viewportRef.current) {
       viewportRef.current.scrollTo({ top: viewportRef.current.scrollHeight, behavior: 'smooth' });
     }
-  }, [messages]);
+  }, [messages, pending]);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 4 * 1024 * 1024) { // 4MB limit
+        toast({
+            variant: 'destructive',
+            title: 'File too large',
+            description: 'Please select a file smaller than 4MB.',
+        });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImage(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!prompt.trim() || pending) return;
+    if ((!prompt.trim() && !image) || pending) return;
 
-    const userMessage: Message = { role: 'user', content: prompt };
+    const userMessage: Message = { role: 'user', content: prompt, image: image };
     setMessages(prev => [...prev, userMessage]);
+    const currentPrompt = prompt;
+    const currentImage = image;
+
     setPrompt('');
+    setImage(null);
     setPending(true);
 
-    const historyForApi = messages.map(msg => ({
-        role: msg.role,
-        content: [{ text: msg.content }],
-    }));
+    const historyForApi = messages.map(msg => {
+        const content: any[] = [];
+        if (msg.content) {
+            content.push({ text: msg.content });
+        }
+        // Model doesn't have image capabilities in its response, only user can send
+        if (msg.image && msg.role === 'user') {
+            content.push({ media: { url: msg.image } });
+        }
+        return { role: msg.role, content: content };
+    });
     
     const formData = new FormData();
     formData.append('history', JSON.stringify(historyForApi));
-    formData.append('prompt', prompt);
+    formData.append('prompt', currentPrompt);
+    if(currentImage) {
+        formData.append('image', currentImage);
+    }
 
     const result = await chatAction(null, formData);
     
@@ -88,7 +131,10 @@ export default function ChatPage() {
         title: 'Error',
         description: result.message || 'An unknown error occurred.',
       });
+      // Restore the message that failed to send
       setMessages(prev => prev.slice(0, -1));
+      setPrompt(currentPrompt);
+      setImage(currentImage);
     }
     setPending(false);
   };
@@ -149,30 +195,64 @@ export default function ChatPage() {
                 )}
               </div>
             </ScrollArea>
-            <div className="py-4">
-              <form ref={formRef} onSubmit={handleSubmit} className="flex items-center gap-2">
-                <Textarea
-                  name="prompt"
-                  placeholder="Ask me anything about prompt engineering..."
-                  rows={1}
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      formRef.current?.requestSubmit();
-                    }
-                  }}
-                  disabled={pending}
-                  className="resize-none"
-                />
-                <Button type="submit" size="icon" disabled={pending || !prompt.trim()}>
-                  {pending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <SendHorizonal className="h-4 w-4" />
-                  )}
-                </Button>
+            <div className="pt-4">
+             <form ref={formRef} onSubmit={handleSubmit} className="relative">
+                {image && (
+                    <div className="p-2">
+                        <div className="relative w-24 h-24 rounded-md overflow-hidden">
+                             <Image src={image} alt="Preview" layout="fill" objectFit="cover" />
+                             <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/50 hover:bg-black/75 text-white hover:text-white"
+                                onClick={() => setImage(null)}
+                             >
+                                <X className="h-4 w-4"/>
+                             </Button>
+                        </div>
+                    </div>
+                )}
+                <div className="flex items-start gap-2 border rounded-lg p-2">
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        className="hidden"
+                        accept="image/png, image/jpeg, image/webp"
+                        disabled={pending}
+                    />
+                    <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={pending}
+                    >
+                        <Paperclip className="h-5 w-5" />
+                    </Button>
+                    <Textarea
+                        name="prompt"
+                        placeholder="Ask me anything, or attach an image..."
+                        rows={1}
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            formRef.current?.requestSubmit();
+                            }
+                        }}
+                        disabled={pending}
+                        className="resize-none border-0 shadow-none focus-visible:ring-0 p-0"
+                    />
+                    <Button type="submit" size="icon" disabled={pending || (!prompt.trim() && !image)}>
+                        {pending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            <SendHorizonal className="h-4 w-4" />
+                        )}
+                    </Button>
+                </div>
               </form>
             </div>
         </div>

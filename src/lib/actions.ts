@@ -78,10 +78,14 @@ export async function describePhotoAction(prevState: any, formData: FormData) {
     }
 }
 
-// Schema for chat history validation, previously imported.
+// Schema for chat history validation
+const contentPartSchema = z.union([
+    z.object({ text: z.string() }),
+    z.object({ media: z.object({ url: z.string() }) }),
+]);
 const messageSchema = z.object({
   role: z.enum(['user', 'model']),
-  content: z.array(z.object({ text: z.string() })),
+  content: z.array(contentPartSchema),
 });
 const chatHistorySchema = z.array(messageSchema);
 
@@ -93,14 +97,23 @@ const chatActionSchema = z.object({
         return str; // let zod handle the error
       }
     }),
-  prompt: z.string().min(1, 'Please enter a message.'),
+  prompt: z.string(),
+  image: z.string().optional(),
 });
 
 export async function chatAction(prevState: any, formData: FormData) {
-    const validatedFields = chatActionSchema.safeParse({
+    const rawData = {
         history: formData.get('history'),
         prompt: formData.get('prompt'),
-    });
+        image: formData.get('image'),
+    };
+
+    // A user can send an image without a prompt
+    if (!rawData.prompt && !rawData.image) {
+        return { message: "Please enter a message or upload an image.", errors: null, data: null };
+    }
+
+    const validatedFields = chatActionSchema.safeParse(rawData);
 
     if (!validatedFields.success) {
         return {
@@ -123,7 +136,8 @@ export async function chatAction(prevState: any, formData: FormData) {
     try {
         const result = await chatFlow({ 
           history: serverValidatedHistory.data, 
-          prompt: validatedFields.data.prompt 
+          prompt: validatedFields.data.prompt,
+          image: validatedFields.data.image,
         });
         return { message: 'success', errors: null, data: result };
     } catch (error) {
