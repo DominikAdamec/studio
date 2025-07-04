@@ -13,7 +13,6 @@ import { chatAction } from '@/lib/actions';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 type Message = {
   role: 'user' | 'model';
@@ -60,13 +59,13 @@ export default function ChatPage() {
   const [prompt, setPrompt] = useState('');
   const [image, setImage] = useState<string | null>(null);
 
-  const viewportRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (viewportRef.current) {
-      viewportRef.current.scrollTo({ top: viewportRef.current.scrollHeight, behavior: 'smooth' });
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: scrollContainerRef.current.scrollHeight, behavior: 'smooth' });
     }
   }, [messages, pending]);
 
@@ -177,7 +176,7 @@ export default function ChatPage() {
       />
       <div className="flex-1 overflow-y-hidden p-4 md:px-8">
          <div className="max-w-4xl mx-auto h-full flex flex-col">
-            <ScrollArea className="flex-1 pr-4 -mr-4" viewportRef={viewportRef}>
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto pr-4 -mr-4">
               <div className="space-y-6 pb-4">
                 {messages.map((message, index) => (
                   <ChatMessage key={index} message={message} />
@@ -194,7 +193,7 @@ export default function ChatPage() {
                   </div>
                 )}
               </div>
-            </ScrollArea>
+            </div>
             <div className="pt-4">
              <form ref={formRef} onSubmit={handleSubmit} className="relative">
                 {image && (
