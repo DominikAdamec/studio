@@ -1,8 +1,11 @@
-# Firebase Studio
+# Firebase Studio Project
 
-This is a NextJS starter in Firebase Studio.
+## ⚠️ Critical Setup Required
 
-To get started, take a look at src/app/page.tsx.
+This project will not run without your Firebase credentials.
 
-## Firebase Setup
-This project requires Firebase credentials to run. Please add your project's configuration values to the `.env` file. You can find these in your Firebase Console under **Project Settings** > **General** > **Your apps** > **SDK setup and configuration**.
+1.  **Get Firebase Credentials**: Go to your Firebase Console, select your project, go to **Project Settings** > **General**, and find your web app's configuration values.
+2.  **Get reCAPTCHA Key**: In the Firebase Console, go to **App Check**, enable it for your web app with **reCAPTCHA v3**, and get the **Site Key**.
+3.  **Update `.env` file**: Copy these values into the `.env` file in the root of this project.
+
+The app will show errors until you complete this setup.
