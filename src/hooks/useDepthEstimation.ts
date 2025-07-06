@@ -143,7 +143,7 @@ const createProgressCallback = (
   let lastLoaded = 0;
 
   return (progress: ProgressData) => {
-    console.log("Loading progress:", progress);
+    //console.log("Loading progress:", progress);
     const now = Date.now();
 
     switch (progress.status) {

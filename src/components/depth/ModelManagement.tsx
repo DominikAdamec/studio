@@ -240,7 +240,9 @@ export const ModelManagement: React.FC<ModelManagementProps> = React.memo(
             {/* Progress Percentage */}
             {modelStatus === "loading" && modelLoadingProgress > 0 && (
               <div className="text-sm font-medium text-blue-600">
-                {Math.round(modelLoadingProgress)}%
+                {realtimeProgress?.percentage !== undefined && realtimeProgress.percentage >= 0
+                  ? `${Math.round(realtimeProgress.percentage)}%`
+                  : `${Math.round(modelLoadingProgress)}%`}
               </div>
             )}
           </div>

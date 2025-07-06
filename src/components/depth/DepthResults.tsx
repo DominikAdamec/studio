@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import { getDepthAtCoordinate } from "@/utils/depthUtils";
 
 interface DepthResultsProps {
@@ -38,6 +39,11 @@ interface DepthResultsProps {
   onMouseMove: (x: number, y: number) => void;
   onMouseLeave: () => void;
   onToggleHighQuality: () => void;
+  brightness: number;
+  onBrightnessChange: (value: number) => void;
+  exposure: number;
+  onExposureChange: (value: number) => void;
+  // Add similar props for exposure and shadows
 }
 
 export const DepthResults: React.FC<DepthResultsProps> = React.memo(
@@ -54,6 +60,11 @@ export const DepthResults: React.FC<DepthResultsProps> = React.memo(
   onMouseMove,
   onMouseLeave,
   onToggleHighQuality,
+    brightness,
+    onBrightnessChange,
+    exposure,
+    onExposureChange,
+    // Add handlers for exposure and shadows
 }) => {
   const handleImageMouseMove = (
     event: React.MouseEvent<HTMLImageElement>,
@@ -83,14 +94,14 @@ export const DepthResults: React.FC<DepthResultsProps> = React.memo(
         <CardDescription>
           Original image and depth estimation results
         </CardDescription>
-        
+
         {/* High Quality Toggle */}
         {depthResult && (
           <div className="flex items-center space-x-2 pt-2">
             <Switch
               id="high-quality"
               checked={highQuality}
-              onCheckedChange={onToggleHighQuality}
+ onCheckedChange={onToggleHighQuality}
             />
             <Label htmlFor="high-quality" className="flex items-center gap-2 text-sm">
               <Sparkles className="w-4 h-4" />
@@ -99,6 +110,38 @@ export const DepthResults: React.FC<DepthResultsProps> = React.memo(
             </Label>
           </div>
         )}
+
+        {/* Image Adjustment Sliders */}
+        {depthResult && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="brightness">Brightness ({brightness?.toFixed(2)})</Label>
+              <Slider
+                id="brightness"
+                min={0}
+                max={2}
+                step={0.01}
+                value={[brightness]}
+                onValueChange={([value]) => onBrightnessChange(value)}
+                disabled={!highQuality}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="exposure">Exposure ({exposure.toFixed(2)})</Label>
+              <Slider
+                id="exposure"
+                min={0}
+                max={2}
+                step={0.01}
+                value={[exposure]}
+                onValueChange={([value]) => onExposureChange(value)}
+                disabled={!highQuality}
+              />
+            </div>
+            {/* Add similar div for Shadows slider */}
+          </div>
+        )}
+
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="depth" className="w-full">
@@ -142,7 +185,7 @@ export const DepthResults: React.FC<DepthResultsProps> = React.memo(
                     className="flex items-center gap-2"
                   >
                     <Download className="w-4 h-4" />
-                    Download Grayscale
+                    {highQuality ? 'Download Grayscale (Upscaled)' : 'Download Grayscale'}
                   </Button>
                 </div>
               </>
