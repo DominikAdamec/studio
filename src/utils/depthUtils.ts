@@ -16,16 +16,11 @@ export const depthToImageData = (
   width: number,
   height: number,
   options: {
-    enhance?: boolean;
-    contrast?: number;
     brightness?: number;
+    exposure?: number;
   } = {},
 ): ImageData => {
-  const { enhance = true, contrast = 0.9, brightness = 0.1 } = options;
-
-  console.log(
-    `Processing depth data: ${depthData.length} values for ${width}x${height} image`,
-  );
+  const { brightness = 1, exposure = 1 } = options;
 
   if (depthData.length !== width * height) {
     throw new Error(
@@ -33,15 +28,10 @@ export const depthToImageData = (
     );
   }
 
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d")!;
-  canvas.width = width;
-  canvas.height = height;
-
-  const imageData = ctx.createImageData(width, height);
+  const imageData = new ImageData(width, height);
   const data = imageData.data;
 
-  // Najdeme min a max hodnoty
+  // Find min/max for normalization
   let minDepth = Infinity;
   let maxDepth = -Infinity;
   for (let i = 0; i < depthData.length; i++) {
@@ -52,26 +42,19 @@ export const depthToImageData = (
   const depthRange = maxDepth - minDepth;
 
   if (depthRange === 0) {
-    // Všechny hodnoty jsou stejné
+    // All values are the same
     for (let i = 0; i < data.length; i += 4) {
       data[i] = data[i + 1] = data[i + 2] = 128;
       data[i + 3] = 255;
     }
   } else {
-    // Normalizujeme a aplikujeme vylepšení
+    // Normalize and apply adjustments
     for (let i = 0; i < depthData.length; i++) {
       let normalizedDepth = (depthData[i] - minDepth) / depthRange;
 
-      if (enhance) {
-        // Aplikujeme kontrast a jas
-        normalizedDepth = Math.pow(normalizedDepth, 1 / contrast);
-        normalizedDepth = Math.max(
-          0,
-          Math.min(1, normalizedDepth + brightness),
-        );
-      }
-
-      const gray = Math.round(normalizedDepth * 255);
+      // Apply brightness and exposure
+      let adjustedDepth = (normalizedDepth + (brightness - 1)) * exposure;
+      const gray = Math.round(Math.max(0, Math.min(1, adjustedDepth)) * 255);
 
       const pixelIndex = i * 4;
       data[pixelIndex] = gray;
@@ -92,13 +75,13 @@ export const depthToColoredImageData = (
   width: number,
   height: number,
   colormap: "viridis" | "plasma" | "inferno" | "magma" = "viridis",
+  options: {
+    brightness?: number;
+    exposure?: number;
+  } = {},
 ): ImageData => {
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d")!;
-  canvas.width = width;
-  canvas.height = height;
-
-  const imageData = ctx.createImageData(width, height);
+  const { brightness = 1, exposure = 1 } = options;
+  const imageData = new ImageData(width, height);
   const data = imageData.data;
 
   // Find min and max depth values for normalization
@@ -109,10 +92,18 @@ export const depthToColoredImageData = (
     maxDepth = Math.max(maxDepth, depthData[i]);
   }
 
+  const depthRange = maxDepth - minDepth;
+
   // Apply colormap
   for (let i = 0; i < depthData.length; i++) {
-    const normalizedDepth = (depthData[i] - minDepth) / (maxDepth - minDepth);
-    const color = getColormapColor(normalizedDepth, colormap);
+    const normalizedDepth =
+      depthRange > 0 ? (depthData[i] - minDepth) / depthRange : 0;
+    
+    // Apply brightness and exposure
+    let adjustedDepth = (normalizedDepth + (brightness - 1)) * exposure;
+    adjustedDepth = Math.max(0, Math.min(1, adjustedDepth)); // clamp before passing to colormap
+
+    const color = getColormapColor(adjustedDepth, colormap);
 
     const pixelIndex = i * 4;
     data[pixelIndex] = color.r; // Red

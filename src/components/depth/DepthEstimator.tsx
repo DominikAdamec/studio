@@ -166,9 +166,9 @@ export const DepthEstimator: React.FC<DepthEstimatorProps> = ({
   const handleColormapChange = useCallback(
     (newColormap: "viridis" | "plasma" | "inferno" | "magma") => {
       setColormap(newColormap);
-      updateColoredImage(depthResult, newColormap);
+      updateColoredImage(depthResult, newColormap, brightness, exposure);
     },
-    [depthResult, updateColoredImage],
+    [depthResult, updateColoredImage, brightness, exposure],
   );
 
   const handleDownloadDepthMap = useCallback(
@@ -205,10 +205,15 @@ export const DepthEstimator: React.FC<DepthEstimatorProps> = ({
   useEffect(() => {
     setIsModelLoaded(modelStatus === "loaded");
   }, [modelStatus]);
-
+  
+  // Effect for updating depth images when result or adjustments change
   useEffect(() => {
-    updateDepthImages(depthResult, colormap);
-  }, [depthResult, colormap, updateDepthImages]);
+    if (depthResult) {
+      updateDepthImages(depthResult, colormap, brightness, exposure);
+    } else {
+      updateDepthImages(null, colormap, 1, 1); // Clear images if no result
+    }
+  }, [depthResult, colormap, brightness, exposure, updateDepthImages]);
 
   // Effect pro uvolnění modelu při odpojení komponenty
   useEffect(() => {
