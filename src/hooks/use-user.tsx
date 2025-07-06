@@ -1,9 +1,25 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
+import {
+  auth,
+  db
+} from '@/lib/firebase';
+import {
+  onAuthStateChanged,
+  User
+} from 'firebase/auth';
+import {
+  onValue,
+  ref,
+  set
+} from 'firebase/database';
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState
+} from 'react';
 
 interface UserData {
   email: string | null;
@@ -18,11 +34,15 @@ interface UserContextType {
   loading: boolean;
 }
 
-const UserContext = createContext<UserContextType | undefined>(undefined);
+const UserContext = createContext < UserContextType | undefined > (undefined);
 
-export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [userData, setUserData] = useState<UserData | null>(null);
+export const UserProvider = ({
+  children
+}: {
+  children: ReactNode
+}) => {
+  const [user, setUser] = useState < User | null > (null);
+  const [userData, setUserData] = useState < UserData | null > (null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,19 +60,23 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (user) {
       setLoading(true);
-      const userRef = doc(db, 'users', user.uid);
-      const unsubscribe = onSnapshot(userRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-           setUserData({
-              email: data.email,
-              plan: data.plan,
-              credits: data.credits ?? 0, // Default to 0 if credits not set
+      const userRef = ref(db, 'users/' + user.uid);
+      const unsubscribe = onValue(userRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          setUserData({
+            email: data.email,
+            plan: data.plan,
+            credits: data.credits ?? 0, // Default to 0 if credits not set
           });
         } else {
           // This should ideally be handled at sign-up, but as a fallback:
-          const initialData: UserData = { email: user.email, plan: 'free', credits: 10 };
-          setDoc(userRef, initialData).then(() => setUserData(initialData));
+          const initialData: UserData = {
+            email: user.email,
+            plan: 'free',
+            credits: 10
+          };
+          set(userRef, initialData).then(() => setUserData(initialData));
         }
         setLoading(false);
       }, (error) => {
@@ -70,7 +94,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     loading,
   };
 
-  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
+  return <UserContext.Provider value = {
+    value
+  } > {
+    children
+  } </UserContext.Provider>;
 };
 
 export const useUser = () => {

@@ -1,14 +1,30 @@
 // src/lib/actions.ts
 'use server';
 
-import {generatePromptIdeas as generatePromptIdeasFlow} from '@/ai/flows/generate-prompt-ideas';
-import {describePhotoForFlux1Dev as describePhotoForFlux1DevFlow} from '@/ai/flows/describe-photo-for-flux1-dev';
-import {chat as chatFlow} from '@/ai/flows/chat-flow';
-import {generateImage as generateImageFlow} from '@/ai/flows/generate-image-flow';
-import {z} from 'zod';
-import {db} from './firebase';
-import {redirect} from 'next/navigation';
-import {doc, runTransaction, updateDoc} from 'firebase/firestore';
+import {
+  chat as chatFlow
+} from '@/ai/flows/chat-flow';
+import {
+  describePhotoForFlux1Dev as describePhotoForFlux1DevFlow
+} from '@/ai/flows/describe-photo-for-flux1-dev';
+import {
+  generateImage as generateImageFlow
+} from '@/ai/flows/generate-image-flow';
+import {
+  generatePromptIdeas as generatePromptIdeasFlow
+} from '@/ai/flows/generate-prompt-ideas';
+import {
+  get,
+  ref,
+  runTransaction,
+  update
+} from 'firebase/database';
+import {
+  z
+} from 'zod';
+import {
+  db
+} from './firebase';
 
 export async function upgradeToProAction(uid: string) {
   if (!uid) {
@@ -18,9 +34,11 @@ export async function upgradeToProAction(uid: string) {
     };
   }
 
-  const userRef = doc(db, 'users', uid);
+  const userRef = ref(db, 'users/' + uid);
   try {
-    await updateDoc(userRef, {plan: 'pro'});
+    await update(userRef, {
+      plan: 'pro'
+    });
     return {
       success: true,
       message: "Congratulations! You've unlocked Prompty PRO!",
@@ -28,10 +46,13 @@ export async function upgradeToProAction(uid: string) {
   } catch (error) {
     console.error('Upgrade failed:', error);
     const errorMessage =
-      error instanceof Error
-        ? error.message
-        : 'Could not update your plan.';
-    return {success: false, message: `Upgrade Failed: ${errorMessage}`};
+      error instanceof Error ?
+      error.message :
+      'Could not update your plan.';
+    return {
+      success: false,
+      message: `Upgrade Failed: ${errorMessage}`
+    };
   }
 }
 
@@ -43,19 +64,18 @@ export async function addCreditsAction(uid: string) {
     };
   }
 
-  const userRef = doc(db, 'users', uid);
+  const userRef = ref(db, 'users/' + uid);
   try {
-    await runTransaction(db, async transaction => {
-      const userDoc = await transaction.get(userRef);
-      if (!userDoc.exists()) {
-        throw new Error('User document does not exist!');
+    await runTransaction(userRef, (currentData) => {
+      if (currentData) {
+        if (currentData.plan !== 'pro') {
+          // Returning undefined aborts the transaction, but we need to throw to reject the promise.
+          throw new Error('Only PRO users can add credits.');
+        }
+        const currentCredits = currentData.credits || 0;
+        currentData.credits = currentCredits + 100;
       }
-      if (userDoc.data().plan !== 'pro') {
-        throw new Error('Only PRO users can add credits.');
-      }
-      const currentCredits = userDoc.data().credits || 0;
-      const newCredits = currentCredits + 100;
-      transaction.update(userRef, {credits: newCredits});
+      return currentData;
     });
     return {
       success: true,
@@ -65,7 +85,10 @@ export async function addCreditsAction(uid: string) {
     console.error('Adding credits failed:', error);
     const errorMessage =
       error instanceof Error ? error.message : 'Could not add credits.';
-    return {success: false, message: `Error: ${errorMessage}`};
+    return {
+      success: false,
+      message: `Error: ${errorMessage}`
+    };
   }
 }
 
@@ -91,8 +114,14 @@ export async function generateIdeasAction(prevState: any, formData: FormData) {
   }
 
   try {
-    const {promptIdeas} = await generatePromptIdeasFlow(validatedFields.data);
-    return {message: 'success', errors: null, data: promptIdeas};
+    const {
+      promptIdeas
+    } = await generatePromptIdeasFlow(validatedFields.data);
+    return {
+      message: 'success',
+      errors: null,
+      data: promptIdeas
+    };
   } catch (error) {
     console.error(error);
     return {
@@ -130,7 +159,11 @@ export async function describePhotoAction(prevState: any, formData: FormData) {
 
   try {
     const result = await describePhotoForFlux1DevFlow(validatedFields.data);
-    return {message: 'success', errors: null, data: result};
+    return {
+      message: 'success',
+      errors: null,
+      data: result
+    };
   } catch (error) {
     console.error(error);
     return {
@@ -143,8 +176,14 @@ export async function describePhotoAction(prevState: any, formData: FormData) {
 
 // Schema for chat history validation
 const contentPartSchema = z.union([
-  z.object({text: z.string()}),
-  z.object({media: z.object({url: z.string()})}),
+  z.object({
+    text: z.string()
+  }),
+  z.object({
+    media: z.object({
+      url: z.string()
+    })
+  }),
 ]);
 const messageSchema = z.object({
   role: z.enum(['user', 'model']),
@@ -208,7 +247,11 @@ export async function chatAction(prevState: any, formData: FormData) {
       prompt: validatedFields.data.prompt,
       image: validatedFields.data.image,
     });
-    return {message: 'success', errors: null, data: result};
+    return {
+      message: 'success',
+      errors: null,
+      data: result
+    };
   } catch (error) {
     console.error(error);
     const errorMessage =
@@ -242,45 +285,54 @@ export async function generateImageAction(prevState: any, formData: FormData) {
     };
   }
 
-  const userRef = doc(db, 'users', validatedFields.data.uid);
+  const userRef = ref(db, 'users/' + validatedFields.data.uid);
 
   try {
-    // Use a transaction to safely read credits and then update
-    const generatedImage = await runTransaction(db, async transaction => {
-      const userDoc = await transaction.get(userRef);
-      if (!userDoc.exists()) {
-        throw new Error('User data not found.');
-      }
+    const snapshot = await get(userRef);
+    if (!snapshot.exists()) {
+      throw new Error('User data not found.');
+    }
 
-      const userData = userDoc.data();
-      if (userData.plan !== 'pro') {
-        throw new Error(
-          'Image generation is a PRO feature. Please upgrade your plan.'
-        );
-      }
+    const userData = snapshot.val();
+    if (userData.plan !== 'pro') {
+      throw new Error(
+        'Image generation is a PRO feature. Please upgrade your plan.'
+      );
+    }
 
-      const credits = userData.credits || 0;
-      if (credits < IMAGE_GENERATION_COST) {
-        throw new Error(
-          `Not enough credits. You need ${IMAGE_GENERATION_COST} credit(s) to generate an image.`
-        );
-      }
+    const credits = userData.credits || 0;
+    if (credits < IMAGE_GENERATION_COST) {
+      throw new Error(
+        `Not enough credits. You need ${IMAGE_GENERATION_COST} credit(s) to generate an image.`
+      );
+    }
 
-      // Now that we've checked credits, generate the image
-      const {imageUrl} = await generateImageFlow({ prompt: validatedFields.data.prompt });
-
-      // Deduct credits
-      const newCreditTotal = credits - IMAGE_GENERATION_COST;
-      transaction.update(userRef, {credits: newCreditTotal});
-
-      return imageUrl;
+    // Now that we've checked credits, generate the image
+    const {
+      imageUrl
+    } = await generateImageFlow({
+      prompt: validatedFields.data.prompt,
     });
 
-    return {message: 'success', errors: null, data: generatedImage};
+    // Deduct credits
+    const newCreditTotal = credits - IMAGE_GENERATION_COST;
+    await update(userRef, {
+      credits: newCreditTotal
+    });
+
+    return {
+      message: 'success',
+      errors: null,
+      data: imageUrl
+    };
   } catch (error) {
     console.error(error);
     const errorMessage =
       error instanceof Error ? error.message : 'An unknown error occurred.';
-    return {message: `AI error: ${errorMessage}`, errors: null, data: null};
+    return {
+      message: `AI error: ${errorMessage}`,
+      errors: null,
+      data: null
+    };
   }
 }
