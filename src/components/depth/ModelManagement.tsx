@@ -26,6 +26,12 @@ import { AVAILABLE_MODELS } from "@/utils/modelList";
 
 const AVAILABLE_DEVICES = [
   {
+    id: "auto",
+    name: "Auto",
+    description: "Let the browser decide (recommended)",
+    icon: "🤖",
+  },
+  {
     id: "wasm",
     name: "WebAssembly",
     description: "CPU-based, works everywhere",
@@ -38,16 +44,28 @@ const AVAILABLE_DEVICES = [
     icon: "⚡",
   },
   {
-    id: "gpu",
-    name: "GPU",
-    description: "GPU acceleration (if available)",
+    id: "webnn",
+    name: "WebNN (Apple)",
+    description: "Neural Engine/GPU (Safari)",
+    icon: "🍎",
+  },
+  {
+    id: "webnn-gpu",
+    name: "WebNN GPU",
+    description: "Force GPU via WebNN (e.g., Apple)",
     icon: "🎮",
   },
   {
-    id: "cuda",
-    name: "CUDA",
-    description: "NVIDIA GPU acceleration",
-    icon: "🚀",
+    id: "webnn-npu",
+    name: "WebNN NPU",
+    description: "Force NPU via WebNN (e.g., Apple)",
+    icon: "🧠",
+  },
+  {
+    id: "webnn-cpu",
+    name: "WebNN CPU",
+    description: "Force CPU via WebNN (e.g., Apple)",
+    icon: "💻",
   },
 ];
 

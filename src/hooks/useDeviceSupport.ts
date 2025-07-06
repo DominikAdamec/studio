@@ -1,18 +1,26 @@
 import { useState, useEffect } from "react";
 
 interface DeviceSupport {
+  auto: boolean;
   wasm: boolean;
   webgpu: boolean;
   gpu: boolean;
-  cuda: boolean;
+  webnn: boolean;
+  "webnn-gpu": boolean;
+  "webnn-npu": boolean;
+  "webnn-cpu": boolean;
 }
 
 export const useDeviceSupport = () => {
   const [deviceSupported, setDeviceSupported] = useState<DeviceSupport>({
+    auto: true,
     wasm: true,
     webgpu: false,
     gpu: false,
-    cuda: false,
+    webnn: false,
+    "webnn-gpu": false,
+    "webnn-npu": false,
+    "webnn-cpu": false,
   });
 
   const [isDetecting, setIsDetecting] = useState(true);
@@ -20,7 +28,16 @@ export const useDeviceSupport = () => {
   useEffect(() => {
     const detectDeviceSupport = async () => {
       setIsDetecting(true);
-      const support = { ...deviceSupported };
+      const support: DeviceSupport = {
+        auto: true,
+        wasm: true,
+        webgpu: false,
+        gpu: false,
+        webnn: false,
+        "webnn-gpu": false,
+        "webnn-npu": false,
+        "webnn-cpu": false,
+      };
 
       try {
         // Check WebGPU support
@@ -40,8 +57,22 @@ export const useDeviceSupport = () => {
           canvas.getContext("experimental-webgl");
         support.gpu = !!gl;
 
-        // CUDA is typically not available in browser
-        support.cuda = false;
+        // Check WebNN (CoreML on Apple) support
+        if ('ml' in navigator && (navigator as any).ml.createContext) {
+            try {
+                support.webnn = true; // If the API exists, we'll consider the general option available
+                support['webnn-gpu'] = !!(await (navigator as any).ml.createContext({ deviceType: 'gpu' }));
+                support['webnn-npu'] = !!(await (navigator as any).ml.createContext({ deviceType: 'npu' }));
+                support['webnn-cpu'] = !!(await (navigator as any).ml.createContext({ deviceType: 'cpu' }));
+            } catch (e) {
+                console.warn("WebNN context creation failed, disabling options.", e);
+                support.webnn = false;
+                support['webnn-gpu'] = false;
+                support['webnn-npu'] = false;
+                support['webnn-cpu'] = false;
+            }
+        }
+
 
         setDeviceSupported(support);
       } catch (error) {
