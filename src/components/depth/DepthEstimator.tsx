@@ -43,7 +43,6 @@ export const DepthEstimator: React.FC<DepthEstimatorProps> = ({
     depthAtMouse,
     highQuality,
     updateDepthImages,
-    updateColoredImage,
     handleMouseMove,
     handleMouseLeave,
     toggleHighQuality,
@@ -169,9 +168,8 @@ export const DepthEstimator: React.FC<DepthEstimatorProps> = ({
   const handleColormapChange = useCallback(
     (newColormap: "viridis" | "plasma" | "inferno" | "magma") => {
       setColormap(newColormap);
-      updateColoredImage(depthResult, newColormap, brightness, exposure, contrast, sharpness);
     },
-    [depthResult, updateColoredImage, brightness, exposure, contrast, sharpness],
+    [],
   );
 
   const handleDownloadDepthMap = useCallback(
@@ -216,7 +214,7 @@ export const DepthEstimator: React.FC<DepthEstimatorProps> = ({
     } else {
       updateDepthImages(null, colormap, 1, 1, 1, 0); // Clear images if no result
     }
-  }, [depthResult, colormap, brightness, exposure, contrast, sharpness, updateDepthImages]);
+  }, [depthResult, colormap, brightness, exposure, contrast, sharpness, highQuality, updateDepthImages]);
 
   // Effect pro uvolnění modelu při odpojení komponenty
   useEffect(() => {

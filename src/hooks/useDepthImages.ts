@@ -26,16 +26,6 @@ export const useDepthImages = () => {
   );
   const [depthAtMouse, setDepthAtMouse] = useState<number | null>(null);
   const [highQuality, setHighQuality] = useState(false);
-  const [lastDepthResult, setLastDepthResult] = useState<any>(null);
-  const [lastColormap, setLastColormap] = useState<
-    "viridis" | "plasma" | "inferno" | "magma"
-  >("viridis");
-  const [lastAdjustments, setLastAdjustments] = useState({
-    brightness: 1,
-    exposure: 1,
-    contrast: 1,
-    sharpness: 0,
-  });
 
   const upscaleDepthData = useCallback(
     (
@@ -212,14 +202,8 @@ export const useDepthImages = () => {
     ) => {
       if (!depthResult) {
         setDepthImages({ grayscale: null, colored: null });
-        setLastDepthResult(null);
         return;
       }
-
-      // Store current state for re-rendering when quality changes
-      setLastDepthResult(depthResult);
-      setLastColormap(colormap);
-      setLastAdjustments({ brightness, exposure, contrast, sharpness });
 
       const grayscaleImage = createImageFromCanvas(
         depthResult.predicted_depth,
@@ -278,55 +262,9 @@ export const useDepthImages = () => {
     setDepthAtMouse(null);
   }, []);
 
-  const updateColoredImage = useCallback(
-    (
-      depthResult: any,
-      newColormap: "viridis" | "plasma" | "inferno" | "magma",
-      brightness: number,
-      exposure: number,
-      contrast: number,
-      sharpness: number,
-    ) => {
-      if (!depthResult) return;
-
-      const coloredImage = createImageFromCanvas(
-        depthResult.predicted_depth,
-        depthResult.width,
-        depthResult.height,
-        true,
-        newColormap,
-        highQuality,
-        brightness,
-        exposure,
-        contrast,
-        sharpness,
-      );
-
-      setDepthImages((prev) => ({
-        ...prev,
-        colored: coloredImage,
-      }));
-    },
-    [createImageFromCanvas, highQuality],
-  );
-
   const toggleHighQuality = useCallback(() => {
     setHighQuality((prev) => !prev);
   }, []);
-
-  // Effect to re-render images when quality mode changes
-  useEffect(() => {
-    if (lastDepthResult) {
-      updateDepthImages(
-        lastDepthResult,
-        lastColormap,
-        lastAdjustments.brightness,
-        lastAdjustments.exposure,
-        lastAdjustments.contrast,
-        lastAdjustments.sharpness,
-      );
-    }
-  }, [highQuality, lastDepthResult, lastColormap, lastAdjustments, updateDepthImages]);
 
   return {
     depthImages,
@@ -334,7 +272,6 @@ export const useDepthImages = () => {
     depthAtMouse,
     highQuality,
     updateDepthImages,
-    updateColoredImage,
     handleMouseMove,
     handleMouseLeave,
     toggleHighQuality,
