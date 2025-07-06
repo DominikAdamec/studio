@@ -1,6 +1,6 @@
 'use server';
 /**
- * @fileOverview A flow for generating images using Vertex AI's Imagen model.
+ * @fileOverview A flow for generating images using a Gemini model.
  *
  * - generateImage - A function that handles image generation.
  * - GenerateImageInput - The input type for the generateImage function.
@@ -8,7 +8,6 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {googleAI} from '@genkit-ai/googleai';
 import {z} from 'genkit';
 
 const GenerateImageInputSchema = z.object({
@@ -34,15 +33,13 @@ const generateImageFlow = ai.defineFlow(
     outputSchema: GenerateImageOutputSchema,
   },
   async ({prompt}) => {
-    // Using imagegeneration@006, a stable version of Imagen 2.
-    // This is the recommended model for general use.
-    const imagen = googleAI.vertex.model('imagegeneration@006');
-
+    // Using the experimental Gemini 2.0 Flash model for image generation.
     const {media} = await ai.generate({
-      model: imagen,
+      model: 'googleai/gemini-2.0-flash-preview-image-generation',
       prompt: prompt,
       config: {
-        responseModalities: ['IMAGE'],
+        // Both TEXT and IMAGE are required for this model.
+        responseModalities: ['TEXT', 'IMAGE'],
       },
     });
 
