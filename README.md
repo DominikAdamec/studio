@@ -1,11 +1,10 @@
 # Firebase Studio Project
 
-## ⚠️ Critical Setup Required
+## ⚠️ App Check Setup Required
 
-This project will not run without your Firebase credentials.
+This project uses Firebase App Check to protect your backend resources. You need to provide your reCAPTCHA v3 Site Key for it to work.
 
-1.  **Get Firebase Credentials**: Go to your Firebase Console, select your project, go to **Project Settings** > **General**, and find your web app's configuration values.
-2.  **Get reCAPTCHA Key**: In the Firebase Console, go to **App Check**, enable it for your web app with **reCAPTCHA v3**, and get the **Site Key**.
-3.  **Update `.env` file**: Copy these values into the `.env` file in the root of this project.
+1.  **Get reCAPTCHA Key**: In the Firebase Console, go to **App Check**, enable it for your web app with **reCAPTCHA v3**, and get the **Site Key**.
+2.  **Update `.env` file**: Copy the Site Key into the `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` value in the `.env` file.
 
-The app will show errors until you complete this setup.
+The app may show errors if you try to access protected resources before completing this setup.
