@@ -127,7 +127,7 @@ export const DepthResults: React.FC<DepthResultsProps> = React.memo(
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="exposure">Exposure ({exposure.toFixed(2)})</Label>
+              <Label htmlFor="exposure">Exposure ({exposure?.toFixed(2)})</Label>
               <Slider
                 id="exposure"
                 min={0}

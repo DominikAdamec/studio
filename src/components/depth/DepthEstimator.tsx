@@ -61,6 +61,8 @@ export const DepthEstimator: React.FC<DepthEstimatorProps> = ({
   const [colormap, setColormap] = useState<
     "viridis" | "plasma" | "inferno" | "magma"
   >("viridis");
+  const [brightness, setBrightness] = useState(1);
+  const [exposure, setExposure] = useState(1);
 
   // Refs pro canvas persistence
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -258,6 +260,10 @@ export const DepthEstimator: React.FC<DepthEstimatorProps> = ({
         onMouseMove={handleMouseMoveWrapper}
         onMouseLeave={handleMouseLeave}
         onToggleHighQuality={toggleHighQuality}
+        brightness={brightness}
+        onBrightnessChange={setBrightness}
+        exposure={exposure}
+        onExposureChange={setExposure}
       />
     </div>
   );
