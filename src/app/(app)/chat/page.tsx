@@ -92,7 +92,7 @@ export default function ChatPage() {
     e.preventDefault();
     if ((!prompt.trim() && !image) || pending) return;
 
-    const userMessage: Message = { role: 'user', content: prompt, image: image };
+    const userMessage: Message = { role: 'user', content: prompt, image: image ?? undefined };
     setMessages(prev => [...prev, userMessage]);
     const currentPrompt = prompt;
     const currentImage = image;
@@ -120,22 +120,36 @@ export default function ChatPage() {
         formData.append('image', currentImage);
     }
 
-    const result = await chatAction(null, formData);
-    
-    if (result.message === 'success' && result.data) {
-      setMessages(prev => [...prev, { role: 'model', content: result.data! }]);
-    } else {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: result.message || 'An unknown error occurred.',
-      });
-      // Restore the message that failed to send
-      setMessages(prev => prev.slice(0, -1));
-      setPrompt(currentPrompt);
-      setImage(currentImage);
+    try {
+      const result = await chatAction(null, formData);
+      
+      if (result.message === 'success' && result.data) {
+        setMessages(prev => [...prev, { role: 'model', content: result.data! }]);
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: result.message || 'An unknown error occurred.',
+        });
+        // Restore the message that failed to send
+        setMessages(prev => prev.slice(0, -1));
+        setPrompt(currentPrompt);
+        setImage(currentImage);
+      }
+    } catch (error) {
+        console.error('Chat submit error:', error);
+        toast({
+            variant: 'destructive',
+            title: 'An unexpected error occurred',
+            description: 'Could not send message. Please try again later.',
+        });
+        // Restore the message that failed to send
+        setMessages(prev => prev.slice(0, -1));
+        setPrompt(currentPrompt);
+        setImage(currentImage);
+    } finally {
+        setPending(false);
     }
-    setPending(false);
   };
 
   if (userLoading) {

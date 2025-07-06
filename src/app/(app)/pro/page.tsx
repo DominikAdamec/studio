@@ -26,7 +26,7 @@ const proFeatures = [
 ];
 
 export default function ProPage() {
-  const {user, isPro, upgradeToPro, loading, userData} = useUser();
+  const {user, isPro, loading, userData} = useUser();
   const router = useRouter();
   const {toast} = useToast();
   const [isUpgrading, setIsUpgrading] = React.useState(false);
@@ -38,32 +38,53 @@ export default function ProPage() {
       return;
     }
     setIsUpgrading(true);
-    const result = await upgradeToProAction();
-    if (result.success) {
-      toast({title: 'Congratulations!', description: result.message});
-    } else {
+    try {
+      const result = await upgradeToProAction();
+      if (result.success) {
+        toast({title: 'Congratulations!', description: result.message});
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Upgrade Failed',
+          description: result.message,
+        });
+      }
+    } catch (error) {
+      console.error('Upgrade error:', error);
       toast({
         variant: 'destructive',
-        title: 'Upgrade Failed',
-        description: result.message,
+        title: 'An unexpected error occurred',
+        description:
+          'The upgrade could not be completed. Please try again later.',
       });
+    } finally {
+      setIsUpgrading(false);
     }
-    setIsUpgrading(false);
   };
 
   const handleAddCredits = async () => {
     setIsAddingCredits(true);
-    const result = await addCreditsAction();
-    if (result.success) {
-      toast({title: 'Success!', description: result.message});
-    } else {
+    try {
+      const result = await addCreditsAction();
+      if (result.success) {
+        toast({title: 'Success!', description: result.message});
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: result.message,
+        });
+      }
+    } catch (error) {
+      console.error('Add credits error:', error);
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: result.message,
+        title: 'An unexpected error occurred',
+        description: 'Could not add credits. Please try again later.',
       });
+    } finally {
+      setIsAddingCredits(false);
     }
-    setIsAddingCredits(false);
   };
 
   if (loading) {
