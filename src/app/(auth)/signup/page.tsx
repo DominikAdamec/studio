@@ -49,12 +49,13 @@ export default function SignUpPage() {
       await setDoc(doc(db, 'users', user.uid), {
         email: user.email,
         plan: 'free',
+        credits: 10,
       });
 
       router.push('/generate');
       toast({
         title: 'Account created!',
-        description: "Welcome to Prompty.",
+        description: "Welcome to Prompty. You've received 10 free credits!",
       });
     } catch (error: any) {
       console.error(error);

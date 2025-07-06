@@ -6,11 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/hooks/use-user';
 import { signOutAction } from '@/lib/actions';
-import { Sparkles, User, Info, Loader2 } from 'lucide-react';
+import { Sparkles, User, Info, Loader2, Coins } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SettingsPage() {
-    const { user, isPro, loading } = useUser();
+    const { user, isPro, loading, userData } = useUser();
 
     if (loading) {
         return (
@@ -73,6 +73,22 @@ export default function SettingsPage() {
                                                 </Button>
                                             )}
                                         </div>
+                                         {isPro && (
+                                            <div className="flex justify-between items-center p-4 border rounded-lg">
+                                                <div>
+                                                    <h4 className="font-semibold">Image Credits</h4>
+                                                    <p className="text-sm text-muted-foreground">
+                                                        You have {userData?.credits ?? 0} credits remaining.
+                                                    </p>
+                                                </div>
+                                                <Button asChild>
+                                                    <Link href="/pro">
+                                                        <Coins className="mr-2 h-4 w-4" />
+                                                        Get More Credits
+                                                    </Link>
+                                                </Button>
+                                            </div>
+                                        )}
                                         <form action={signOutAction}>
                                             <Button variant="outline" className="w-full">Sign Out</Button>
                                         </form>

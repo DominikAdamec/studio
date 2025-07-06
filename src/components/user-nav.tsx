@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useUser } from "@/hooks/use-user";
 import { signOutAction } from "@/lib/actions";
-import { CreditCard, LogOut, User as UserIcon, Gem } from "lucide-react";
+import { CreditCard, LogOut, User as UserIcon, Gem, Coins } from "lucide-react";
 import Link from "next/link";
 import { ProBadge } from "./pro-badge";
 
@@ -59,6 +59,15 @@ export function UserNav() {
               <span>Profile</span>
             </DropdownMenuItem>
           </Link>
+           {isPro && (
+             <DropdownMenuItem className="flex justify-between">
+                <div className="flex items-center">
+                    <Coins className="mr-2 h-4 w-4" />
+                    <span>Credits</span>
+                </div>
+                <span>{userData?.credits ?? 0}</span>
+            </DropdownMenuItem>
+          )}
           {!isPro && (
             <Link href="/pro">
               <DropdownMenuItem>
