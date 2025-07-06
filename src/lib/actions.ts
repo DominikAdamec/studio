@@ -137,7 +137,6 @@ const describePhotoSchema = z.object({
   promptLength: z.enum(['low', 'normal', 'high']),
   promptDetail: z.enum(['low', 'normal', 'high']),
   language: z.string(),
-  allowNsfw: z.preprocess(val => val === 'on', z.boolean()),
 });
 
 export async function describePhotoAction(prevState: any, formData: FormData) {
@@ -146,7 +145,6 @@ export async function describePhotoAction(prevState: any, formData: FormData) {
     promptLength: formData.get('promptLength'),
     promptDetail: formData.get('promptDetail'),
     language: formData.get('language'),
-    allowNsfw: formData.get('allowNsfw'),
   });
 
   if (!validatedFields.success) {

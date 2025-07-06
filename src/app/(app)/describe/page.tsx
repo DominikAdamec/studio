@@ -9,7 +9,6 @@ import { describePhotoAction } from '@/lib/actions';
 import { useUser } from '@/hooks/use-user';
 import { PageHeader } from '@/components/page-header';
 import { PromptCard } from '@/components/prompt-card';
-import { ProBadge } from '@/components/pro-badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +22,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Switch } from '@/components/ui/switch';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -306,25 +304,6 @@ export default function DescribePage() {
                         {state.errors.language[0]}
                       </p>
                     )}
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between space-x-2">
-                    <Label
-                      htmlFor="nsfw-switch"
-                      className="flex flex-col space-y-1"
-                    >
-                      <span className="flex items-center">
-                        Allow Potentially Unsafe Content{!isPro && <ProBadge />}
-                      </span>
-                      <span className="font-normal leading-snug text-muted-foreground text-xs">
-                        Disable safety filters. Use with caution.
-                      </span>
-                    </Label>
-                    <Switch
-                      id="nsfw-switch"
-                      name="allowNsfw"
-                      disabled={!isPro || isGuestLimitReached}
-                    />
                   </div>
                 </CardContent>
               </Card>

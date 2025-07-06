@@ -20,7 +20,6 @@ const DescribePhotoForFlux1DevInputSchema = z.object({
   promptLength: z.enum(['low', 'normal', 'high']).default('normal').describe('The desired length of the generated prompt.'),
   promptDetail: z.enum(['low', 'normal', 'high']).default('normal').describe('The desired level of detail in the generated prompt.'),
   language: z.string().default('English').describe('The output language for the description and prompt.'),
-  allowNsfw: z.boolean().default(false).describe('Whether to allow potentially unsafe content.'),
 });
 export type DescribePhotoForFlux1DevInput = z.infer<typeof DescribePhotoForFlux1DevInputSchema>;
 
@@ -38,6 +37,21 @@ const describePhotoForFlux1DevPrompt = ai.definePrompt({
   name: 'describePhotoForFlux1DevPrompt',
   input: {schema: DescribePhotoForFlux1DevInputSchema},
   output: {schema: DescribePhotoForFlux1DevOutputSchema},
+  config: {
+    safetySettings: [{
+        category: 'HARM_CATEGORY_HATE_SPEECH',
+        threshold: 'BLOCK_NONE',
+      }, {
+        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+        threshold: 'BLOCK_NONE',
+      }, {
+        category: 'HARM_CATEGORY_HARASSMENT',
+        threshold: 'BLOCK_NONE',
+      }, {
+        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+        threshold: 'BLOCK_NONE',
+      }]
+  },
   prompt: `You are the AI Chat Master, an advanced AI assistant powered by Google's Gemini models, integrated into an application called Prompty. Your purpose is to provide expert assistance for crafting and refining image generation prompts. You are an expert in using models like Flux1.Dev, Midjourney, and DALL-E.
 
   Analyze the following image and provide a concise description of its contents. Then, generate a prompt that could be used with Flux1.Dev to recreate a similar image.
@@ -65,21 +79,7 @@ const describePhotoForFlux1DevFlow = ai.defineFlow(
     outputSchema: DescribePhotoForFlux1DevOutputSchema,
   },
   async input => {
-    const safetySettings = input.allowNsfw ? [{
-        category: 'HARM_CATEGORY_HATE_SPEECH',
-        threshold: 'BLOCK_NONE',
-      }, {
-        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-        threshold: 'BLOCK_NONE',
-      }, {
-        category: 'HARM_CATEGORY_HARASSMENT',
-        threshold: 'BLOCK_NONE',
-      }, {
-        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-        threshold: 'BLOCK_NONE',
-      }] : [];
-
-    const {output} = await describePhotoForFlux1DevPrompt(input, { safetySettings });
+    const {output} = await describePhotoForFlux1DevPrompt(input);
     return output!;
   }
 );
