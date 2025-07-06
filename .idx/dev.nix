@@ -15,7 +15,7 @@
   services.firebase.emulators = {
     detect = true;
     projectId = "demo-app";
-    services = ["auth" "firestore"];
+    services = ["auth"];
   };
   idx = {
     # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
