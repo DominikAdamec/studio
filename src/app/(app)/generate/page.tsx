@@ -50,8 +50,8 @@ export default function GeneratePage() {
   return (
     <div className="flex flex-col h-full">
       <PageHeader
-        title="Generate Prompts"
-        description="Let our AI spark your imagination with unique prompt ideas."
+        title="Prompt Studio"
+        description="Let the AI Chat Master spark your imagination with unique prompt ideas."
       />
       <div className="flex-1 overflow-y-auto p-4 md:px-8">
         <div className="max-w-4xl mx-auto">

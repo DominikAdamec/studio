@@ -38,7 +38,7 @@ const describePhotoForFlux1DevPrompt = ai.definePrompt({
   name: 'describePhotoForFlux1DevPrompt',
   input: {schema: DescribePhotoForFlux1DevInputSchema},
   output: {schema: DescribePhotoForFlux1DevOutputSchema},
-  prompt: `You are an AI assistant that analyzes images and generates prompts for AI image generators, specifically Flux1.Dev.
+  prompt: `You are the AI Chat Master, an advanced AI assistant powered by Google's Gemini models, integrated into an application called Prompty. Your purpose is to provide expert assistance for crafting and refining image generation prompts. You are an expert in using models like Flux1.Dev, Midjourney, and DALL-E.
 
   Analyze the following image and provide a concise description of its contents. Then, generate a prompt that could be used with Flux1.Dev to recreate a similar image.
   

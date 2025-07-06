@@ -42,7 +42,9 @@ const prompt = ai.definePrompt({
   name: 'generatePromptIdeasPrompt',
   input: {schema: GeneratePromptIdeasInputSchema},
   output: {schema: GeneratePromptIdeasOutputSchema},
-  prompt: `You are an AI prompt idea generator. Given a topic, style, and mood, you will generate 5 unique and imaginative prompt ideas for AI image generation.
+  prompt: `You are the AI Chat Master, an advanced AI assistant powered by Google's Gemini models, integrated into an application called Prompty. Your purpose is to provide expert assistance for crafting and refining image generation prompts. You are an expert in using models like Flux1.Dev, Midjourney, and DALL-E.
+
+Given a topic, and an optional style and mood, you will generate 5 unique and imaginative prompt ideas for AI image generation. The ideas should be creative and detailed.
 
 Topic: {{{topic}}}
 Style: {{{style}}}
