@@ -78,7 +78,7 @@ function ImageResult({state}: {state: any}) {
 }
 
 export default function ImaginePage() {
-  const {isPro, loading: userLoading, userData} = useUser();
+  const {isPro, loading: userLoading, userData, user} = useUser();
   const initialState = {message: null, errors: null, data: null};
   const [state, dispatch] = useActionState(generateImageAction, initialState);
   const formRef = useRef<HTMLFormElement>(null);
@@ -130,6 +130,7 @@ export default function ImaginePage() {
       />
       <div className="flex-1 overflow-y-auto p-4 md:px-8">
         <form action={dispatch} ref={formRef}>
+          <input type="hidden" name="uid" value={user?.uid ?? ''} />
           <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
             <div className="flex flex-col gap-4">
               <Card>
@@ -157,6 +158,11 @@ export default function ImaginePage() {
                   {state.errors?.prompt && (
                     <p className="text-sm text-destructive mt-2">
                       {state.errors.prompt[0]}
+                    </p>
+                  )}
+                   {state.errors?.uid && (
+                    <p className="text-sm text-destructive mt-2">
+                      {state.errors.uid[0]}
                     </p>
                   )}
                 </CardContent>

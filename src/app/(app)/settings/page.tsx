@@ -5,12 +5,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/hooks/use-user';
-import { signOutAction } from '@/lib/actions';
 import { Sparkles, User, Info, Loader2, Coins } from 'lucide-react';
 import Link from 'next/link';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
+import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
     const { user, isPro, loading, userData } = useUser();
+    const router = useRouter();
+
+    const handleSignOut = async () => {
+        await signOut(auth);
+        router.push('/login');
+    };
 
     if (loading) {
         return (
@@ -89,9 +97,7 @@ export default function SettingsPage() {
                                                 </Button>
                                             </div>
                                         )}
-                                        <form action={signOutAction}>
-                                            <Button variant="outline" className="w-full">Sign Out</Button>
-                                        </form>
+                                        <Button onClick={handleSignOut} variant="outline" className="w-full">Sign Out</Button>
                                     </CardContent>
                                 </Card>
                             ) : (

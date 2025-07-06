@@ -39,7 +39,7 @@ export default function ProPage() {
     }
     setIsUpgrading(true);
     try {
-      const result = await upgradeToProAction();
+      const result = await upgradeToProAction(user.uid);
       if (result.success) {
         toast({title: 'Congratulations!', description: result.message});
       } else {
@@ -63,9 +63,17 @@ export default function ProPage() {
   };
 
   const handleAddCredits = async () => {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'Authentication Error',
+        description: 'You must be logged in to add credits.',
+      });
+      return;
+    }
     setIsAddingCredits(true);
     try {
-      const result = await addCreditsAction();
+      const result = await addCreditsAction(user.uid);
       if (result.success) {
         toast({title: 'Success!', description: result.message});
       } else {

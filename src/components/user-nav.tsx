@@ -16,17 +16,26 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useUser } from "@/hooks/use-user";
-import { signOutAction } from "@/lib/actions";
 import { CreditCard, LogOut, User as UserIcon, Gem, Coins } from "lucide-react";
 import Link from "next/link";
 import { ProBadge } from "./pro-badge";
+import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { useRouter } from "next/navigation";
+
 
 export function UserNav() {
   const { user, userData, isPro } = useUser();
+  const router = useRouter();
 
   if (!user) {
     return null;
   }
+
+  const handleSignOut = async () => {
+    await signOut(auth);
+    router.push('/login');
+  };
 
   const getInitials = (email: string) => {
     return email ? email.charAt(0).toUpperCase() : '?';
@@ -79,14 +88,10 @@ export function UserNav() {
           )}
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <form action={signOutAction} className="w-full">
-            <button type="submit" className="w-full">
-                 <DropdownMenuItem>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                </DropdownMenuItem>
-            </button>
-        </form>
+        <DropdownMenuItem onSelect={handleSignOut} className="cursor-pointer">
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Log out</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )

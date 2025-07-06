@@ -6,25 +6,19 @@ import {describePhotoForFlux1Dev as describePhotoForFlux1DevFlow} from '@/ai/flo
 import {chat as chatFlow} from '@/ai/flows/chat-flow';
 import {generateImage as generateImageFlow} from '@/ai/flows/generate-image-flow';
 import {z} from 'zod';
-import {auth, db} from './firebase';
+import {db} from './firebase';
 import {redirect} from 'next/navigation';
 import {doc, runTransaction, updateDoc} from 'firebase/firestore';
 
-export async function signOutAction() {
-  await auth.signOut();
-  redirect('/login');
-}
-
-export async function upgradeToProAction() {
-  const user = auth.currentUser;
-  if (!user) {
+export async function upgradeToProAction(uid: string) {
+  if (!uid) {
     return {
       success: false,
-      message: 'You must be logged in to upgrade.',
+      message: 'User not identified. Please log in again.',
     };
   }
 
-  const userRef = doc(db, 'users', user.uid);
+  const userRef = doc(db, 'users', uid);
   try {
     await updateDoc(userRef, {plan: 'pro'});
     return {
@@ -41,16 +35,15 @@ export async function upgradeToProAction() {
   }
 }
 
-export async function addCreditsAction() {
-  const user = auth.currentUser;
-  if (!user) {
+export async function addCreditsAction(uid: string) {
+  if (!uid) {
     return {
       success: false,
-      message: 'You must be logged in to add credits.',
+      message: 'User not identified. Please log in again.',
     };
   }
 
-  const userRef = doc(db, 'users', user.uid);
+  const userRef = doc(db, 'users', uid);
   try {
     await runTransaction(db, async transaction => {
       const userDoc = await transaction.get(userRef);
@@ -230,22 +223,15 @@ export async function chatAction(prevState: any, formData: FormData) {
 
 const generateImageSchema = z.object({
   prompt: z.string().min(1, 'Please enter a prompt.'),
+  uid: z.string().min(1, 'You must be logged in to generate images.'),
 });
 
 const IMAGE_GENERATION_COST = 1;
 
 export async function generateImageAction(prevState: any, formData: FormData) {
-  const user = auth.currentUser;
-  if (!user) {
-    return {
-      message: 'You must be logged in to generate images.',
-      data: null,
-      errors: null,
-    };
-  }
-
   const validatedFields = generateImageSchema.safeParse({
     prompt: formData.get('prompt'),
+    uid: formData.get('uid'),
   });
 
   if (!validatedFields.success) {
@@ -256,7 +242,7 @@ export async function generateImageAction(prevState: any, formData: FormData) {
     };
   }
 
-  const userRef = doc(db, 'users', user.uid);
+  const userRef = doc(db, 'users', validatedFields.data.uid);
 
   try {
     // Use a transaction to safely read credits and then update
@@ -281,7 +267,7 @@ export async function generateImageAction(prevState: any, formData: FormData) {
       }
 
       // Now that we've checked credits, generate the image
-      const {imageUrl} = await generateImageFlow(validatedFields.data);
+      const {imageUrl} = await generateImageFlow({ prompt: validatedFields.data.prompt });
 
       // Deduct credits
       const newCreditTotal = credits - IMAGE_GENERATION_COST;
