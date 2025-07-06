@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -45,29 +46,30 @@ const AVAILABLE_DEVICES = [
   },
   {
     id: "webnn",
-    name: "WebNN (Apple)",
-    description: "Neural Engine/GPU (Safari)",
+    name: "WebNN Auto (Apple)",
+    description: "Use WebNN without specifying a device",
     icon: "🍎",
   },
   {
     id: "webnn-gpu",
-    name: "WebNN GPU",
-    description: "Force GPU via WebNN (e.g., Apple)",
+    name: "GPU (WebNN)",
+    description: "Use GPU via WebNN (Safari)",
     icon: "🎮",
   },
   {
     id: "webnn-npu",
-    name: "WebNN NPU",
-    description: "Force NPU via WebNN (e.g., Apple)",
+    name: "Neural Engine (WebNN)",
+    description: "Use Apple's Neural Engine (Safari)",
     icon: "🧠",
   },
   {
     id: "webnn-cpu",
-    name: "WebNN CPU",
-    description: "Force CPU via WebNN (e.g., Apple)",
+    name: "CPU (WebNN)",
+    description: "Use CPU via WebNN (Safari)",
     icon: "💻",
   },
 ];
+
 
 type ModelSize = "fp32" | "fp16" | "q8" | "q4" | "int8" | "bnb4" | "bnb8";
 
@@ -408,3 +410,5 @@ export const ModelManagement: React.FC<ModelManagementProps> = React.memo(
     </Card>
   )
 });
+
+    
