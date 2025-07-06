@@ -1,3 +1,4 @@
+
 /**
  * Utility functions for processing depth maps from depth estimation models
  */
@@ -7,6 +8,97 @@ export interface DepthMapData {
   width: number;
   height: number;
 }
+
+/**
+ * Upscales depth data using bilinear interpolation.
+ */
+export const upscaleDepthData = (
+  depthData: Float32Array,
+  width: number,
+  height: number,
+  scale: number = 2,
+): {
+  data: Float32Array;
+  width: number;
+  height: number;
+} => {
+  const newWidth = width * scale;
+  const newHeight = height * scale;
+  const newData = new Float32Array(newWidth * newHeight);
+
+  for (let y = 0; y < newHeight; y++) {
+    for (let x = 0; x < newWidth; x++) {
+      const srcX = x / scale;
+      const srcY = y / scale;
+
+      const x1 = Math.floor(srcX);
+      const y1 = Math.floor(srcY);
+      const x2 = Math.min(x1 + 1, width - 1);
+      const y2 = Math.min(y1 + 1, height - 1);
+
+      const fx = srcX - x1;
+      const fy = srcY - y1;
+
+      const p1 = depthData[y1 * width + x1];
+      const p2 = depthData[y1 * width + x2];
+      const p3 = depthData[y2 * width + x1];
+      const p4 = depthData[y2 * width + x2];
+
+      const interpolated =
+        p1 * (1 - fx) * (1 - fy) +
+        p2 * fx * (1 - fy) +
+        p3 * (1 - fx) * fy +
+        p4 * fx * fy;
+
+      newData[y * newWidth + x] = interpolated;
+    }
+  }
+
+  return { data: newData, width: newWidth, height: newHeight };
+};
+
+/**
+ * Enhances depth data using an adaptive filter.
+ */
+export const enhanceDepthData = (depthData: Float32Array, width: number, height: number): Float32Array => {
+  const enhanced = new Float32Array(depthData.length);
+
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const idx = y * width + x;
+      const center = depthData[idx];
+      const neighbors = [
+        depthData[(y - 1) * width + x],
+        depthData[(y + 1) * width + x],
+        depthData[y * width + (x - 1)],
+        depthData[y * width + (x + 1)],
+      ];
+      const mean = neighbors.reduce((sum, val) => sum + val, center) / 5;
+      const variance = neighbors.reduce(
+        (sum, val) => sum + Math.pow(val - mean, 2),
+        Math.pow(center - mean, 2),
+      ) / 5;
+
+      if (variance < 0.01) {
+        enhanced[idx] = mean;
+      } else {
+        const sharpened = center + 0.1 * (center - mean);
+        enhanced[idx] = sharpened;
+      }
+    }
+  }
+  for (let x = 0; x < width; x++) {
+    enhanced[x] = depthData[x];
+    enhanced[(height - 1) * width + x] = depthData[(height - 1) * width + x];
+  }
+  for (let y = 0; y < height; y++) {
+    enhanced[y * width] = depthData[y * width];
+    enhanced[y * width + (width - 1)] = depthData[y * width + (width - 1)];
+  }
+
+  return enhanced;
+};
+
 
 /**
  * Applies a contrast adjustment to image data.
@@ -322,17 +414,38 @@ export const downloadDepthMap = (
   width: number,
   height: number,
   filename: string = "depth_map.png",
-  colored: boolean = false,
-  colormap: "viridis" | "plasma" | "inferno" | "magma" = "viridis",
+  options: {
+    colored?: boolean;
+    colormap?: "viridis" | "plasma" | "inferno" | "magma";
+    highQuality?: boolean;
+    brightness?: number;
+    exposure?: number;
+    contrast?: number;
+    sharpness?: number;
+  } = {}
 ): void => {
+  const { colored = false, colormap = 'viridis', highQuality = false, ...adjustments } = options;
+  
+  let processedData = depthData;
+  let processedWidth = width;
+  let processedHeight = height;
+
+  if (highQuality) {
+      const enhanced = enhanceDepthData(depthData, width, height);
+      const upscaled = upscaleDepthData(enhanced, width, height, 2);
+      processedData = upscaled.data;
+      processedWidth = upscaled.width;
+      processedHeight = upscaled.height;
+  }
+  
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d")!;
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = processedWidth;
+  canvas.height = processedHeight;
 
   const imageData = colored
-    ? depthToColoredImageData(depthData, width, height, colormap)
-    : depthToImageData(depthData, width, height);
+    ? depthToColoredImageData(processedData, processedWidth, processedHeight, colormap, adjustments)
+    : depthToImageData(processedData, processedWidth, processedHeight, adjustments);
 
   ctx.putImageData(imageData, 0, 0);
 

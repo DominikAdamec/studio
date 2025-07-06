@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -35,7 +36,7 @@ interface DepthResultsProps {
   depthAtMouse: number | null;
   highQuality: boolean;
   onColormapChange: (colormap: "viridis" | "plasma" | "inferno" | "magma") => void;
-  onDownloadDepthMap: (colored: boolean) => void;
+  onDownloadDepthMap: (colored: boolean, highQuality: boolean) => void;
   onMouseMove: (x: number, y: number) => void;
   onMouseLeave: () => void;
   onToggleHighQuality: () => void;
@@ -206,7 +207,7 @@ export const DepthResults: React.FC<DepthResultsProps> = React.memo(
                   </div>
                   <div className="flex justify-center">
                     <Button
-                      onClick={() => onDownloadDepthMap(false)}
+                      onClick={() => onDownloadDepthMap(false, highQuality)}
                       variant="outline"
                       className="flex items-center gap-2"
                     >
@@ -246,12 +247,12 @@ export const DepthResults: React.FC<DepthResultsProps> = React.memo(
                   </div>
                   <div className="flex justify-center">
                     <Button
-                      onClick={() => onDownloadDepthMap(true)}
+                      onClick={() => onDownloadDepthMap(true, highQuality)}
                       variant="outline"
                       className="flex items-center gap-2"
                     >
                       <Download className="w-4 h-4" />
-                      Download Colored
+                      {highQuality ? 'Download Colored (Upscaled)' : 'Download Colored'}
                     </Button>
                   </div>
                 </>

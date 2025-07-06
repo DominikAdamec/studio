@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
@@ -173,20 +174,27 @@ export const DepthEstimator: React.FC<DepthEstimatorProps> = ({
   );
 
   const handleDownloadDepthMap = useCallback(
-    (colored: boolean = false) => {
+    (colored: boolean, isHighQuality: boolean) => {
       if (!depthResult) return;
 
-      const filename = `depth_map_${Date.now()}.png`;
+      const filename = `depth_map_${Date.now()}_${isHighQuality ? 'hq' : 'std'}.png`;
       downloadDepthMap(
         depthResult.predicted_depth,
         depthResult.width,
         depthResult.height,
         filename,
-        colored,
-        colormap,
+        {
+          colored,
+          colormap,
+          highQuality: isHighQuality,
+          brightness,
+          exposure,
+          contrast,
+          sharpness,
+        }
       );
     },
-    [depthResult, colormap],
+    [depthResult, colormap, brightness, exposure, contrast, sharpness],
   );
 
   const handleMouseMoveWrapper = useCallback(

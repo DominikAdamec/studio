@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -161,7 +162,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       </header>
       <main className="flex-1 pb-24">{children}</main>
       <footer className="fixed bottom-0 inset-x-0 p-4 flex justify-center z-50 md:hidden">
-        <nav className="bg-card text-card-foreground rounded-full shadow-lg p-2.5 flex items-center justify-center gap-2">
+        <nav className="w-[90%] bg-card text-card-foreground rounded-full shadow-lg p-2.5 flex items-center justify-around">
           {mobileBottomNavItems.slice(0, 2).map(({ href, icon: Icon, pro }) => (
             <NavLink
               key={href}
