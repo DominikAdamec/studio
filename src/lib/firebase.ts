@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -10,7 +10,6 @@ const firebaseConfig = {
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase
@@ -20,18 +19,16 @@ const db = getFirestore(app);
 
 // Initialize App Check
 if (typeof window !== 'undefined') {
-    const recaptchaKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-    if (recaptchaKey && recaptchaKey !== 'YOUR_RECAPTCHA_V3_SITE_KEY') {
-        try {
-            initializeAppCheck(app, {
-                provider: new ReCaptchaV3Provider(recaptchaKey),
-                isTokenAutoRefreshEnabled: true,
-            });
-        } catch (e) {
-            console.error("Error initializing Firebase App Check", e);
-        }
-    }
+  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+  
+  // Only initialize if the key is present and not the placeholder.
+  // The AppCheckGuard will show a warning to the user if it's missing.
+  if (siteKey && siteKey !== 'YOUR_RECAPTCHA_V3_SITE_KEY') {
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(siteKey),
+      isTokenAutoRefreshEnabled: true,
+    });
+  }
 }
-
 
 export { app, auth, db };
