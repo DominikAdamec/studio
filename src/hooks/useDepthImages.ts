@@ -33,6 +33,8 @@ export const useDepthImages = () => {
   const [lastAdjustments, setLastAdjustments] = useState({
     brightness: 1,
     exposure: 1,
+    contrast: 1,
+    sharpness: 0,
   });
 
   const upscaleDepthData = useCallback(
@@ -150,6 +152,8 @@ export const useDepthImages = () => {
       useHighQuality: boolean = false,
       brightness: number = 1,
       exposure: number = 1,
+      contrast: number = 1,
+      sharpness: number = 0,
     ): string | null => {
       let processedData = depthData;
       let processedWidth = width;
@@ -178,13 +182,13 @@ export const useDepthImages = () => {
               processedWidth,
               processedHeight,
               colormap,
-              { brightness, exposure },
+              { brightness, exposure, contrast, sharpness },
             )
           : depthToImageData(
               processedData,
               processedWidth,
               processedHeight,
-              { brightness, exposure },
+              { brightness, exposure, contrast, sharpness },
             );
 
         ctx.putImageData(imageData, 0, 0);
@@ -203,6 +207,8 @@ export const useDepthImages = () => {
       colormap: "viridis" | "plasma" | "inferno" | "magma" = "viridis",
       brightness: number = 1,
       exposure: number = 1,
+      contrast: number = 1,
+      sharpness: number = 0,
     ) => {
       if (!depthResult) {
         setDepthImages({ grayscale: null, colored: null });
@@ -213,7 +219,7 @@ export const useDepthImages = () => {
       // Store current state for re-rendering when quality changes
       setLastDepthResult(depthResult);
       setLastColormap(colormap);
-      setLastAdjustments({ brightness, exposure });
+      setLastAdjustments({ brightness, exposure, contrast, sharpness });
 
       const grayscaleImage = createImageFromCanvas(
         depthResult.predicted_depth,
@@ -224,6 +230,8 @@ export const useDepthImages = () => {
         highQuality,
         brightness,
         exposure,
+        contrast,
+        sharpness
       );
 
       const coloredImage = createImageFromCanvas(
@@ -235,6 +243,8 @@ export const useDepthImages = () => {
         highQuality,
         brightness,
         exposure,
+        contrast,
+        sharpness,
       );
 
       setDepthImages({
@@ -274,6 +284,8 @@ export const useDepthImages = () => {
       newColormap: "viridis" | "plasma" | "inferno" | "magma",
       brightness: number,
       exposure: number,
+      contrast: number,
+      sharpness: number,
     ) => {
       if (!depthResult) return;
 
@@ -286,6 +298,8 @@ export const useDepthImages = () => {
         highQuality,
         brightness,
         exposure,
+        contrast,
+        sharpness,
       );
 
       setDepthImages((prev) => ({
@@ -308,6 +322,8 @@ export const useDepthImages = () => {
         lastColormap,
         lastAdjustments.brightness,
         lastAdjustments.exposure,
+        lastAdjustments.contrast,
+        lastAdjustments.sharpness,
       );
     }
   }, [highQuality, lastDepthResult, lastColormap, lastAdjustments, updateDepthImages]);

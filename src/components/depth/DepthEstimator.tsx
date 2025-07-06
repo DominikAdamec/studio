@@ -63,6 +63,9 @@ export const DepthEstimator: React.FC<DepthEstimatorProps> = ({
   >("viridis");
   const [brightness, setBrightness] = useState(1);
   const [exposure, setExposure] = useState(1);
+  const [contrast, setContrast] = useState(1);
+  const [sharpness, setSharpness] = useState(0);
+
 
   // Refs pro canvas persistence
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -166,9 +169,9 @@ export const DepthEstimator: React.FC<DepthEstimatorProps> = ({
   const handleColormapChange = useCallback(
     (newColormap: "viridis" | "plasma" | "inferno" | "magma") => {
       setColormap(newColormap);
-      updateColoredImage(depthResult, newColormap, brightness, exposure);
+      updateColoredImage(depthResult, newColormap, brightness, exposure, contrast, sharpness);
     },
-    [depthResult, updateColoredImage, brightness, exposure],
+    [depthResult, updateColoredImage, brightness, exposure, contrast, sharpness],
   );
 
   const handleDownloadDepthMap = useCallback(
@@ -209,11 +212,11 @@ export const DepthEstimator: React.FC<DepthEstimatorProps> = ({
   // Effect for updating depth images when result or adjustments change
   useEffect(() => {
     if (depthResult) {
-      updateDepthImages(depthResult, colormap, brightness, exposure);
+      updateDepthImages(depthResult, colormap, brightness, exposure, contrast, sharpness);
     } else {
-      updateDepthImages(null, colormap, 1, 1); // Clear images if no result
+      updateDepthImages(null, colormap, 1, 1, 1, 0); // Clear images if no result
     }
-  }, [depthResult, colormap, brightness, exposure, updateDepthImages]);
+  }, [depthResult, colormap, brightness, exposure, contrast, sharpness, updateDepthImages]);
 
   // Effect pro uvolnění modelu při odpojení komponenty
   useEffect(() => {
@@ -269,6 +272,10 @@ export const DepthEstimator: React.FC<DepthEstimatorProps> = ({
         onBrightnessChange={setBrightness}
         exposure={exposure}
         onExposureChange={setExposure}
+        contrast={contrast}
+        onContrastChange={setContrast}
+        sharpness={sharpness}
+        onSharpnessChange={setSharpness}
       />
     </div>
   );

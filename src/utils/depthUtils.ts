@@ -9,6 +9,51 @@ export interface DepthMapData {
 }
 
 /**
+ * Applies a contrast adjustment to image data.
+ */
+const applyContrast = (imageData: ImageData, contrast: number) => {
+  const data = imageData.data;
+  const factor = (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] = factor * (data[i] - 128) + 128;
+    data[i + 1] = factor * (data[i + 1] - 128) + 128;
+    data[i + 2] = factor * (data[i + 2] - 128) + 128;
+  }
+};
+
+/**
+ * Applies a sharpening effect to image data.
+ */
+const applySharpness = (imageData: ImageData, sharpness: number) => {
+  if (sharpness <= 0) return;
+  const { width, height, data } = imageData;
+  const src = new Uint8ClampedArray(data); // copy original data
+  const kernel = [[0, -1, 0], [-1, 5, -1], [0, -1, 0]];
+
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const i = (y * width + x) * 4;
+      let r = 0, g = 0, b = 0;
+
+      for (let ky = -1; ky <= 1; ky++) {
+        for (let kx = -1; kx <= 1; kx++) {
+          const pixelIndex = ((y + ky) * width + (x + kx)) * 4;
+          const weight = kernel[ky + 1][kx + 1];
+          r += src[pixelIndex] * weight;
+          g += src[pixelIndex + 1] * weight;
+          b += src[pixelIndex + 2] * weight;
+        }
+      }
+      // Blend original with sharpened
+      data[i] = src[i] * (1 - sharpness) + r * sharpness;
+      data[i + 1] = src[i + 1] * (1 - sharpness) + g * sharpness;
+      data[i + 2] = src[i + 2] * (1 - sharpness) + b * sharpness;
+    }
+  }
+};
+
+
+/**
  * Convert depth map to canvas ImageData for visualization
  */
 export const depthToImageData = (
@@ -18,9 +63,11 @@ export const depthToImageData = (
   options: {
     brightness?: number;
     exposure?: number;
+    contrast?: number;
+    sharpness?: number;
   } = {},
 ): ImageData => {
-  const { brightness = 1, exposure = 1 } = options;
+  const { brightness = 1, exposure = 1, contrast = 1, sharpness = 0 } = options;
 
   if (depthData.length !== width * height) {
     throw new Error(
@@ -64,6 +111,13 @@ export const depthToImageData = (
     }
   }
 
+  if (contrast !== 1) {
+    applyContrast(imageData, contrast);
+  }
+  if (sharpness > 0) {
+    applySharpness(imageData, sharpness);
+  }
+
   return imageData;
 };
 
@@ -78,9 +132,11 @@ export const depthToColoredImageData = (
   options: {
     brightness?: number;
     exposure?: number;
+    contrast?: number;
+    sharpness?: number;
   } = {},
 ): ImageData => {
-  const { brightness = 1, exposure = 1 } = options;
+  const { brightness = 1, exposure = 1, contrast = 1, sharpness = 0 } = options;
   const imageData = new ImageData(width, height);
   const data = imageData.data;
 
@@ -110,6 +166,13 @@ export const depthToColoredImageData = (
     data[pixelIndex + 1] = color.g; // Green
     data[pixelIndex + 2] = color.b; // Blue
     data[pixelIndex + 3] = 255; // Alpha
+  }
+
+  if (contrast !== 1) {
+    applyContrast(imageData, contrast);
+  }
+  if (sharpness > 0) {
+    applySharpness(imageData, sharpness);
   }
 
   return imageData;

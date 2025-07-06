@@ -43,6 +43,10 @@ interface DepthResultsProps {
   onBrightnessChange: (value: number) => void;
   exposure: number;
   onExposureChange: (value: number) => void;
+  contrast: number;
+  onContrastChange: (value: number) => void;
+  sharpness: number;
+  onSharpnessChange: (value: number) => void;
 }
 
 export const DepthResults: React.FC<DepthResultsProps> = React.memo(
@@ -63,6 +67,10 @@ export const DepthResults: React.FC<DepthResultsProps> = React.memo(
     onBrightnessChange,
     exposure,
     onExposureChange,
+    contrast,
+    onContrastChange,
+    sharpness,
+    onSharpnessChange,
   }) => {
     const handleImageMouseMove = (
       event: React.MouseEvent<HTMLImageElement>,
@@ -132,6 +140,28 @@ export const DepthResults: React.FC<DepthResultsProps> = React.memo(
                     step={0.01}
                     value={[exposure]}
                     onValueChange={([value]) => onExposureChange(value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contrast">Contrast ({contrast?.toFixed(2)})</Label>
+                  <Slider
+                    id="contrast"
+                    min={0}
+                    max={2}
+                    step={0.01}
+                    value={[contrast]}
+                    onValueChange={([value]) => onContrastChange(value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sharpness">Sharpness ({sharpness?.toFixed(2)})</Label>
+                  <Slider
+                    id="sharpness"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={[sharpness]}
+                    onValueChange={([value]) => onSharpnessChange(value)}
                   />
                 </div>
               </div>
